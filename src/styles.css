@@ -26,19 +26,20 @@ body {
 
 #plugin-task-board {
   min-height: 100dvh;
-  padding: 18px;
+  padding: clamp(10px, 1.5vw, 22px);
 }
 
 .kanban-shell {
-  max-width: 1320px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
-  min-height: calc(100dvh - 36px);
+  min-height: calc(100dvh - clamp(20px, 3vw, 44px));
   border: 1px solid var(--line);
   border-radius: 22px;
-  padding: 14px;
+  padding: clamp(10px, 1.2vw, 18px);
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: clamp(260px, 20vw, 360px) minmax(0, 1fr);
+  gap: clamp(10px, 1.1vw, 16px);
   background: var(--surface);
   backdrop-filter: blur(8px);
   box-shadow: 0 22px 40px rgba(30, 40, 56, 0.14);
@@ -234,7 +235,7 @@ input:focus-visible {
   border: 1px solid var(--line);
   border-radius: 16px;
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-  padding: 14px;
+  padding: clamp(10px, 1vw, 16px);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -253,14 +254,14 @@ input:focus-visible {
 }
 
 .workspace-header__column-composer {
-  width: min(470px, 100%);
+  width: min(680px, 100%);
 }
 
 .lanes {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(260px, 320px);
-  gap: 12px;
+  grid-auto-columns: minmax(clamp(260px, 24vw, 340px), 1fr);
+  gap: clamp(8px, 1vw, 14px);
   overflow-x: auto;
   overflow-y: hidden;
   padding-bottom: 8px;
