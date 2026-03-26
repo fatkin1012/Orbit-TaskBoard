@@ -11,8 +11,6 @@ export default defineConfig({
       external: [
         'react',
         'react-dom/client',
-        'react/jsx-runtime',
-        'react/jsx-dev-runtime',
         '@toolbox/sdk'
       ]
     },
