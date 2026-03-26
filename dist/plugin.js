@@ -1,121 +1,144 @@
-import t, { useState as d, useRef as S, useEffect as h, useCallback as u, useMemo as O, createElement as R } from "react";
-import { createRoot as D } from "react-dom/client";
-const _ = "tasks", I = "1.0.0", T = [
+import n, { useState as m, useRef as w, useEffect as _, useCallback as f, useMemo as R, createElement as D } from "react";
+import { createRoot as I } from "react-dom/client";
+const N = "tasks", z = "1.0.0", A = [
   { key: "todo", label: "待辦" },
   { key: "in-progress", label: "進行中" },
   { key: "done", label: "已完成" }
 ];
-function z(r) {
-  return Array.isArray(r) ? r.filter((a) => {
-    if (!a || typeof a != "object")
+function K(t) {
+  return Array.isArray(t) ? t.filter((r) => {
+    if (!r || typeof r != "object")
       return !1;
-    const s = a;
+    const s = r;
     return typeof s.id == "string" && typeof s.title == "string" && (s.status === "todo" || s.status === "in-progress" || s.status === "done") && typeof s.createdAt == "string";
-  }).map((a) => ({ ...a })) : [];
+  }).map((r) => ({ ...r })) : [];
 }
-function L({ context: r }) {
-  const [a, s] = d([]), [l, f] = d(""), [v, C] = d(!1), [p, w] = d(!1), y = S(!1);
-  h(() => {
+function p(t, r = "root") {
+  if (Array.isArray(t))
+    return { source: r, value: t };
+  if (typeof t == "string")
+    try {
+      const i = JSON.parse(t);
+      return p(i, `${r}:json`);
+    } catch {
+      return null;
+    }
+  if (!t || typeof t != "object")
+    return null;
+  const s = t, c = ["data", "value", "payload", "tasks"];
+  for (const i of c) {
+    const u = p(s[i], `${r}.${i}`);
+    if (u)
+      return u;
+  }
+  return null;
+}
+function L({ context: t }) {
+  const [r, s] = m([]), [c, i] = m(""), [u, S] = m(!1), [b, v] = m(!1), E = w(!1);
+  _(() => {
     let e = !1;
     return (async () => {
       try {
         console.info("[task-board] restore start");
-        const o = await r.storage.get(_);
+        const o = await t.storage.get(N);
         if (e)
           return;
-        const i = o == null ? void 0 : o.data, g = z(i);
-        s(g), console.info("[task-board] restore success", { count: g.length });
+        const l = p(o), T = K((l == null ? void 0 : l.value) ?? []);
+        s(T), console.info("[task-board] restore success", {
+          count: T.length,
+          source: (l == null ? void 0 : l.source) ?? "empty"
+        });
       } catch (o) {
         console.error("[task-board] restore failed", o);
       } finally {
-        e || (w(!0), C(!0));
+        e || (v(!0), S(!0));
       }
     })(), () => {
       e = !0;
     };
-  }, [r]), h(() => {
-    if (p) {
-      if (!y.current) {
-        y.current = !0;
+  }, [t]), _(() => {
+    if (b) {
+      if (!E.current) {
+        E.current = !0;
         return;
       }
-      console.info("[task-board] save triggered", { count: a.length }), r.storage.save(_, a, I).then(() => r.eventBus.emit("TASK_COUNT_CHANGED", { count: a.length })).catch((e) => {
+      console.info("[task-board] save triggered", { count: r.length }), t.storage.save(N, r, z).then(() => t.eventBus.emit("TASK_COUNT_CHANGED", { count: r.length })).catch((e) => {
         console.error("[task-board] save failed", e);
       });
     }
-  }, [r, p, a]);
-  const c = u(
+  }, [t, b, r]);
+  const d = f(
     (e) => {
-      s((n) => e(n));
+      s((a) => e(a));
     },
     []
-  ), E = u(() => {
-    const e = l.trim();
+  ), g = f(() => {
+    const e = c.trim();
     if (!e)
       return;
-    const n = (/* @__PURE__ */ new Date()).toISOString();
-    c((o) => [
+    const a = (/* @__PURE__ */ new Date()).toISOString();
+    d((o) => [
       {
         id: crypto.randomUUID(),
         title: e,
         status: "todo",
-        createdAt: n
+        createdAt: a
       },
       ...o
-    ]), f("");
-  }, [l, c]), m = u(
-    (e, n) => {
-      c((o) => o.map((i) => i.id === e ? { ...i, status: n } : i));
+    ]), i("");
+  }, [c, d]), k = f(
+    (e, a) => {
+      d((o) => o.map((l) => l.id === e ? { ...l, status: a } : l));
     },
-    [c]
-  ), A = u(
+    [d]
+  ), O = f(
     (e) => {
-      c((n) => n.filter((o) => o.id !== e));
+      d((a) => a.filter((o) => o.id !== e));
     },
-    [c]
-  ), b = O(() => T.reduce(
-    (e, n) => (e[n.key] = a.filter((o) => o.status === n.key), e),
+    [d]
+  ), h = R(() => A.reduce(
+    (e, a) => (e[a.key] = r.filter((o) => o.status === a.key), e),
     {
       todo: [],
       "in-progress": [],
       done: []
     }
-  ), [a]);
-  return /* @__PURE__ */ t.createElement("section", { className: "task-board", "aria-busy": !v }, /* @__PURE__ */ t.createElement("header", { className: "task-board__header" }, /* @__PURE__ */ t.createElement("div", null, /* @__PURE__ */ t.createElement("p", { className: "task-board__eyebrow" }, "Task Board"), /* @__PURE__ */ t.createElement("h1", null, "任務管理")), /* @__PURE__ */ t.createElement("p", { className: "task-board__count" }, "總任務: ", a.length)), /* @__PURE__ */ t.createElement("div", { className: "task-board__composer" }, /* @__PURE__ */ t.createElement("label", { htmlFor: "new-task", className: "sr-only" }, "新增任務"), /* @__PURE__ */ t.createElement(
+  ), [r]);
+  return /* @__PURE__ */ n.createElement("section", { className: "task-board", "aria-busy": !u }, /* @__PURE__ */ n.createElement("header", { className: "task-board__header" }, /* @__PURE__ */ n.createElement("div", null, /* @__PURE__ */ n.createElement("p", { className: "task-board__eyebrow" }, "Task Board"), /* @__PURE__ */ n.createElement("h1", null, "任務管理")), /* @__PURE__ */ n.createElement("p", { className: "task-board__count" }, "總任務: ", r.length)), /* @__PURE__ */ n.createElement("div", { className: "task-board__composer" }, /* @__PURE__ */ n.createElement("label", { htmlFor: "new-task", className: "sr-only" }, "新增任務"), /* @__PURE__ */ n.createElement(
     "input",
     {
       id: "new-task",
       type: "text",
       placeholder: "輸入任務內容...",
-      value: l,
-      onChange: (e) => f(e.target.value),
+      value: c,
+      onChange: (e) => i(e.target.value),
       onKeyDown: (e) => {
-        e.key === "Enter" && E();
+        e.key === "Enter" && g();
       }
     }
-  ), /* @__PURE__ */ t.createElement("button", { type: "button", onClick: E }, "新增")), /* @__PURE__ */ t.createElement("div", { className: "task-board__grid" }, T.map((e) => /* @__PURE__ */ t.createElement("article", { key: e.key, className: "task-column" }, /* @__PURE__ */ t.createElement("header", null, /* @__PURE__ */ t.createElement("h2", null, e.label), /* @__PURE__ */ t.createElement("span", null, b[e.key].length)), /* @__PURE__ */ t.createElement("ul", null, b[e.key].map((n) => /* @__PURE__ */ t.createElement("li", { key: n.id, className: "task-card" }, /* @__PURE__ */ t.createElement("p", null, n.title), /* @__PURE__ */ t.createElement("div", { className: "task-card__actions" }, e.key !== "todo" && /* @__PURE__ */ t.createElement("button", { type: "button", onClick: () => m(n.id, "todo") }, "待辦"), e.key !== "in-progress" && /* @__PURE__ */ t.createElement("button", { type: "button", onClick: () => m(n.id, "in-progress") }, "進行中"), e.key !== "done" && /* @__PURE__ */ t.createElement("button", { type: "button", onClick: () => m(n.id, "done") }, "完成"), /* @__PURE__ */ t.createElement("button", { type: "button", className: "danger", onClick: () => A(n.id) }, "刪除")))))))));
+  ), /* @__PURE__ */ n.createElement("button", { type: "button", onClick: g }, "新增")), /* @__PURE__ */ n.createElement("div", { className: "task-board__grid" }, A.map((e) => /* @__PURE__ */ n.createElement("article", { key: e.key, className: "task-column" }, /* @__PURE__ */ n.createElement("header", null, /* @__PURE__ */ n.createElement("h2", null, e.label), /* @__PURE__ */ n.createElement("span", null, h[e.key].length)), /* @__PURE__ */ n.createElement("ul", null, h[e.key].map((a) => /* @__PURE__ */ n.createElement("li", { key: a.id, className: "task-card" }, /* @__PURE__ */ n.createElement("p", null, a.title), /* @__PURE__ */ n.createElement("div", { className: "task-card__actions" }, e.key !== "todo" && /* @__PURE__ */ n.createElement("button", { type: "button", onClick: () => k(a.id, "todo") }, "待辦"), e.key !== "in-progress" && /* @__PURE__ */ n.createElement("button", { type: "button", onClick: () => k(a.id, "in-progress") }, "進行中"), e.key !== "done" && /* @__PURE__ */ n.createElement("button", { type: "button", onClick: () => k(a.id, "done") }, "完成"), /* @__PURE__ */ n.createElement("button", { type: "button", className: "danger", onClick: () => O(a.id) }, "刪除")))))))));
 }
-const N = "plugin-task-board", k = /* @__PURE__ */ new WeakMap();
-function M(r, a) {
+const C = "plugin-task-board", y = /* @__PURE__ */ new WeakMap();
+function M(t, r) {
   const s = document.createElement("div");
-  s.id = N, r.appendChild(s);
-  const l = D(s);
-  k.set(r, l), l.render(R(L, { context: a }));
+  s.id = C, t.appendChild(s);
+  const c = I(s);
+  y.set(t, c), c.render(D(L, { context: r }));
 }
-function U(r) {
-  const a = k.get(r);
-  a && (a.unmount(), k.delete(r)), r.innerHTML = "";
+function U(t) {
+  const r = y.get(t);
+  r && (r.unmount(), y.delete(t)), t.innerHTML = "";
 }
-const K = {
-  id: N,
-  mount(r, a) {
-    M(r, a);
+const H = {
+  id: C,
+  mount(t, r) {
+    M(t, r);
   },
-  unmount(r) {
-    U(r);
+  unmount(t) {
+    U(t);
   }
 };
 export {
-  K as default
+  H as default
 };
 //# sourceMappingURL=plugin.js.map

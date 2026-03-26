@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { IAppContext, IDataEnvelope } from '@toolbox/sdk';
+import type { IAppContext } from '@toolbox/sdk';
 
 type TaskStatus = 'todo' | 'in-progress' | 'done';
 
@@ -45,6 +45,37 @@ function sanitizeTasks(value: unknown): ITask[] {
     .map((task) => ({ ...task }));
 }
 
+function resolveTaskArray(value: unknown, source = 'root'): { source: string; value: unknown[] } | null {
+  if (Array.isArray(value)) {
+    return { source, value };
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      return resolveTaskArray(parsed, `${source}:json`);
+    } catch {
+      return null;
+    }
+  }
+
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const candidateKeys = ['data', 'value', 'payload', 'tasks'];
+
+  for (const key of candidateKeys) {
+    const resolved = resolveTaskArray(record[key], `${source}.${key}`);
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return null;
+}
+
 export function App({ context }: IAppProps) {
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [draftTitle, setDraftTitle] = useState('');
@@ -58,15 +89,18 @@ export function App({ context }: IAppProps) {
     const initialize = async () => {
       try {
         console.info('[task-board] restore start');
-        const envelope = await context.storage.get<ITask[]>(STORAGE_KEY);
+        const stored = await context.storage.get<unknown>(STORAGE_KEY);
         if (isCancelled) {
           return;
         }
 
-        const rawData = (envelope as IDataEnvelope<unknown> | null)?.data;
-        const normalized = sanitizeTasks(rawData);
+        const resolved = resolveTaskArray(stored);
+        const normalized = sanitizeTasks(resolved?.value ?? []);
         setTasks(normalized);
-        console.info('[task-board] restore success', { count: normalized.length });
+        console.info('[task-board] restore success', {
+          count: normalized.length,
+          source: resolved?.source ?? 'empty'
+        });
       } catch (error) {
         console.error('[task-board] restore failed', error);
       } finally {
