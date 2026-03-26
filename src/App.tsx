@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { IAppContext, IDataEnvelope } from '@toolbox/sdk';
 
 type TaskStatus = 'todo' | 'in-progress' | 'done';
@@ -15,7 +15,7 @@ interface IAppProps {
 }
 
 const STORAGE_KEY = 'tasks';
-const STORAGE_VERSION = '1.0';
+const STORAGE_VERSION = '1.0.0';
 
 const COLUMNS: Array<{ key: TaskStatus; label: string }> = [
   { key: 'todo', label: '待辦' },
@@ -49,21 +49,29 @@ export function App({ context }: IAppProps) {
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [draftTitle, setDraftTitle] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const firstPersistSkippedRef = useRef(false);
 
   useEffect(() => {
     let isCancelled = false;
 
     const initialize = async () => {
       try {
+        console.info('[task-board] restore start');
         const envelope = await context.storage.get<ITask[]>(STORAGE_KEY);
         if (isCancelled) {
           return;
         }
 
-        const normalized = sanitizeTasks((envelope as IDataEnvelope<ITask[]> | null)?.data ?? []);
+        const rawData = (envelope as IDataEnvelope<unknown> | null)?.data;
+        const normalized = sanitizeTasks(rawData);
         setTasks(normalized);
+        console.info('[task-board] restore success', { count: normalized.length });
+      } catch (error) {
+        console.error('[task-board] restore failed', error);
       } finally {
         if (!isCancelled) {
+          setHydrated(true);
           setIsLoaded(true);
         }
       }
@@ -76,23 +84,30 @@ export function App({ context }: IAppProps) {
     };
   }, [context]);
 
-  const persistAndBroadcast = useCallback(
-    async (nextTasks: ITask[]) => {
-      await context.storage.save(STORAGE_KEY, nextTasks, STORAGE_VERSION);
-      await context.eventBus.emit('TASK_COUNT_CHANGED', { count: nextTasks.length });
-    },
-    [context]
-  );
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    if (!firstPersistSkippedRef.current) {
+      firstPersistSkippedRef.current = true;
+      return;
+    }
+
+    console.info('[task-board] save triggered', { count: tasks.length });
+    void context.storage
+      .save(STORAGE_KEY, tasks, STORAGE_VERSION)
+      .then(() => context.eventBus.emit('TASK_COUNT_CHANGED', { count: tasks.length }))
+      .catch((error) => {
+        console.error('[task-board] save failed', error);
+      });
+  }, [context, hydrated, tasks]);
 
   const mutateTasks = useCallback(
     (updater: (prev: ITask[]) => ITask[]) => {
-      setTasks((prev) => {
-        const next = updater(prev);
-        void persistAndBroadcast(next);
-        return next;
-      });
+      setTasks((prev) => updater(prev));
     },
-    [persistAndBroadcast]
+    []
   );
 
   const addTask = useCallback(() => {
