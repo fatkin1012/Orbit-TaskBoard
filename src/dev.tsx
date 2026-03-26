@@ -30,4 +30,8 @@ if (!container) {
   throw new Error('Missing #root container');
 }
 
-createRoot(container).render(<App context={devContext} />);
+createRoot(container).render(
+  <div id="plugin-task-board">
+    <App context={devContext} />
+  </div>
+);
