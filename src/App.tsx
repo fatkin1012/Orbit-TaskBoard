@@ -43,6 +43,8 @@ interface IAppProps {
   context: IAppContext;
 }
 
+type TDropPlacement = 'before' | 'after';
+
 const STORAGE_KEY = 'task-boards';
 const LEGACY_STORAGE_KEY = 'tasks';
 const STORAGE_VERSION = '2.0.0';
@@ -374,6 +376,18 @@ function moveCardWithOrder(
   return [...untouched, ...normalizedSource, ...normalizedTarget];
 }
 
+function getVerticalDropPlacement(event: React.DragEvent<HTMLElement>): TDropPlacement {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const offsetY = event.clientY - rect.top;
+  return offsetY < rect.height / 2 ? 'before' : 'after';
+}
+
+function getHorizontalDropPlacement(event: React.DragEvent<HTMLElement>): TDropPlacement {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const offsetX = event.clientX - rect.left;
+  return offsetX < rect.width / 2 ? 'before' : 'after';
+}
+
 export function App({ context }: IAppProps) {
   const [store, setStore] = useState<IBoardStore>(() => createDefaultStore());
   const [draftBoardName, setDraftBoardName] = useState('');
@@ -387,11 +401,16 @@ export function App({ context }: IAppProps) {
   const [cardForm, setCardForm] = useState<{ title: string; description: string }>({ title: '', description: '' });
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
   const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
+  const [draggingColumnId, setDraggingColumnId] = useState<string | null>(null);
+  const [dragOverLanePlacement, setDragOverLanePlacement] = useState<{ id: string; position: TDropPlacement } | null>(null);
+  const [draggingBoardId, setDraggingBoardId] = useState<string | null>(null);
+  const [dragOverBoardPlacement, setDragOverBoardPlacement] = useState<{ id: string; position: TDropPlacement } | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const firstPersistSkippedRef = useRef(false);
   const skipNextBoardBlurSaveRef = useRef(false);
   const skipNextColumnBlurSaveRef = useRef(false);
+  const lanesRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -593,6 +612,50 @@ export function App({ context }: IAppProps) {
     [mutateStore, store.boards]
   );
 
+  const moveBoardWithOrder = useCallback(
+    (targetBoardId: string | null, placement: TDropPlacement = 'before') => {
+      if (!draggingBoardId) {
+        return;
+      }
+
+      mutateStore((prev) => {
+        const movingIndex = prev.boards.findIndex((board) => board.id === draggingBoardId);
+        if (movingIndex < 0) {
+          return prev;
+        }
+
+        const remaining = prev.boards.filter((board) => board.id !== draggingBoardId);
+        const movingBoard = prev.boards[movingIndex];
+
+        let insertIndex = remaining.length;
+        if (targetBoardId !== null) {
+          const targetIndex = remaining.findIndex((board) => board.id === targetBoardId);
+          if (targetIndex < 0) {
+            return prev;
+          }
+
+          insertIndex = placement === 'after' ? targetIndex + 1 : targetIndex;
+        }
+
+        if (insertIndex < 0 || insertIndex > remaining.length) {
+          return prev;
+        }
+
+        const boards = [...remaining];
+        boards.splice(insertIndex, 0, movingBoard);
+
+        return {
+          ...prev,
+          boards
+        };
+      });
+
+      setDraggingBoardId(null);
+      setDragOverBoardPlacement(null);
+    },
+    [draggingBoardId, mutateStore]
+  );
+
   const addColumn = useCallback(() => {
     if (!activeBoard) {
       return;
@@ -719,6 +782,50 @@ export function App({ context }: IAppProps) {
       });
     },
     [activeBoard, updateBoardById]
+  );
+
+  const moveColumnWithOrder = useCallback(
+    (targetColumnId: string | null, placement: TDropPlacement = 'before') => {
+      if (!activeBoard || !draggingColumnId) {
+        return;
+      }
+
+      updateBoardById(activeBoard.id, (board) => {
+        const movingIndex = board.columns.findIndex((column) => column.id === draggingColumnId);
+        if (movingIndex < 0) {
+          return board;
+        }
+
+        const remaining = board.columns.filter((column) => column.id !== draggingColumnId);
+        const movingColumn = board.columns[movingIndex];
+
+        let insertIndex = remaining.length;
+        if (targetColumnId !== null) {
+          const targetIndex = remaining.findIndex((column) => column.id === targetColumnId);
+          if (targetIndex < 0) {
+            return board;
+          }
+
+          insertIndex = placement === 'after' ? targetIndex + 1 : targetIndex;
+        }
+
+        if (insertIndex < 0 || insertIndex > remaining.length) {
+          return board;
+        }
+
+        const columns = [...remaining];
+        columns.splice(insertIndex, 0, movingColumn);
+
+        return {
+          ...board,
+          columns: columns.map((column, index) => ({ ...column, order: index }))
+        };
+      });
+
+      setDraggingColumnId(null);
+      setDragOverLanePlacement(null);
+    },
+    [activeBoard, draggingColumnId, updateBoardById]
   );
 
   const addCard = useCallback(
@@ -882,9 +989,66 @@ export function App({ context }: IAppProps) {
           </button>
         </div>
 
-        <ul className="board-list" role="list">
+        <ul
+          className="board-list"
+          role="list"
+          onDragOver={(event) => {
+            if (event.target !== event.currentTarget) {
+              return;
+            }
+
+            event.preventDefault();
+            setDragOverBoardPlacement(null);
+          }}
+          onDrop={(event) => {
+            if (event.target !== event.currentTarget) {
+              return;
+            }
+
+            event.preventDefault();
+            moveBoardWithOrder(null);
+          }}
+        >
           {store.boards.map((board) => (
-            <li key={board.id}>
+            <li
+              key={board.id}
+              className={[
+                'board-list__item',
+                draggingBoardId === board.id ? 'board-list__item--dragging' : '',
+                dragOverBoardPlacement?.id === board.id && dragOverBoardPlacement.position === 'before'
+                  ? 'board-list__item--indicator-before'
+                  : '',
+                dragOverBoardPlacement?.id === board.id && dragOverBoardPlacement.position === 'after'
+                  ? 'board-list__item--indicator-after'
+                  : ''
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              draggable
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = 'move';
+                setDraggingBoardId(board.id);
+              }}
+              onDragEnd={() => {
+                setDraggingBoardId(null);
+                setDragOverBoardPlacement(null);
+              }}
+              onDragOver={(event) => {
+                event.preventDefault();
+
+                const position = getVerticalDropPlacement(event);
+                setDragOverBoardPlacement({ id: board.id, position });
+              }}
+              onDragLeave={() => {
+                setDragOverBoardPlacement((prev) => (prev?.id === board.id ? null : prev));
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+
+                const position = getVerticalDropPlacement(event);
+                moveBoardWithOrder(board.id, position);
+              }}
+            >
               <button
                 type="button"
                 className={board.id === activeBoard?.id ? 'board-item board-item--active' : 'board-item'}
@@ -973,21 +1137,90 @@ export function App({ context }: IAppProps) {
           </div>
         </header>
 
-        <div className="lanes">
+        <div
+          className="lanes"
+          ref={lanesRef}
+          onDragOver={(event) => {
+            if (!draggingColumnId) {
+              return;
+            }
+
+            const scroller = lanesRef.current;
+            if (scroller) {
+              const rect = scroller.getBoundingClientRect();
+              const edgeThreshold = 96;
+              const step = 20;
+
+              if (event.clientX < rect.left + edgeThreshold) {
+                scroller.scrollLeft -= step;
+              } else if (event.clientX > rect.right - edgeThreshold) {
+                scroller.scrollLeft += step;
+              }
+            }
+
+            if (event.target !== event.currentTarget) {
+              return;
+            }
+
+            event.preventDefault();
+            setDragOverLanePlacement(null);
+          }}
+          onDrop={(event) => {
+            if (!draggingColumnId) {
+              return;
+            }
+
+            if (event.target !== event.currentTarget) {
+              return;
+            }
+
+            event.preventDefault();
+            moveColumnWithOrder(null);
+          }}
+        >
           {sortedColumns.map((column) => {
             const cards = activeBoard ? getCardsByColumn(activeBoard.cards, column.id) : [];
 
             return (
               <article
                 key={column.id}
-                className={dragOverColumnId === column.id ? 'lane lane--drop' : 'lane'}
+                className={[
+                  'lane',
+                  dragOverColumnId === column.id ? 'lane--drop' : '',
+                  dragOverLanePlacement?.id === column.id && dragOverLanePlacement.position === 'before'
+                    ? 'lane--indicator-before'
+                    : '',
+                  dragOverLanePlacement?.id === column.id && dragOverLanePlacement.position === 'after'
+                    ? 'lane--indicator-after'
+                    : '',
+                  draggingColumnId === column.id ? 'lane--dragging' : ''
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
                 onDragOver={(event) => {
                   event.preventDefault();
+
+                  if (draggingColumnId) {
+                    const position = getHorizontalDropPlacement(event);
+                    setDragOverLanePlacement({ id: column.id, position });
+                    return;
+                  }
+
                   setDragOverColumnId(column.id);
                 }}
-                onDragLeave={() => setDragOverColumnId((prev) => (prev === column.id ? null : prev))}
+                onDragLeave={() => {
+                  setDragOverColumnId((prev) => (prev === column.id ? null : prev));
+                  setDragOverLanePlacement((prev) => (prev?.id === column.id ? null : prev));
+                }}
                 onDrop={(event) => {
                   event.preventDefault();
+
+                  if (draggingColumnId) {
+                    const position = getHorizontalDropPlacement(event);
+                    moveColumnWithOrder(column.id, position);
+                    return;
+                  }
+
                   handleDropCard(column.id, null);
                 }}
               >
@@ -1025,9 +1258,25 @@ export function App({ context }: IAppProps) {
                       aria-label="編輯欄位名稱"
                     />
                   ) : (
-                    <h3>{column.name}</h3>
+                    <div
+                      className="lane__title-grip"
+                      draggable
+                      title="拖動欄位排序"
+                      onDragStart={(event) => {
+                        event.dataTransfer.effectAllowed = 'move';
+                        setDraggingColumnId(column.id);
+                      }}
+                      onDragEnd={() => {
+                        setDraggingColumnId(null);
+                        setDragOverLanePlacement(null);
+                      }}
+                    >
+                      <h3>{column.name}</h3>
+                    </div>
                   )}
-                  <span>{cards.length}</span>
+                  <div className="lane__header-tools">
+                    <span>{cards.length}</span>
+                  </div>
                 </header>
 
                 <div className="lane__header-actions">
