@@ -104,6 +104,13 @@ input {
   background: #fff;
   font-size: 16px;
   color: var(--ink);
+.lane__title-input {
+  min-height: 40px;
+  font-size: 1rem;
+  font-weight: 700;
+  border: 1px solid #9bc3ff;
+  background: #ffffff;
+}
 }
 
 textarea {
@@ -251,6 +258,15 @@ input:focus-visible {
 
 .workspace-header h2 {
   font-size: clamp(1.2rem, 2vw, 1.8rem);
+}
+
+.workspace-header__title-input {
+  min-height: 44px;
+  min-width: min(520px, 100%);
+  font-size: clamp(1.1rem, 1.8vw, 1.6rem);
+  font-weight: 700;
+  border: 1px solid #9bc3ff;
+  background: #ffffff;
 }
 
 .workspace-header__column-composer {

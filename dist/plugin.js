@@ -1,505 +1,614 @@
-import a, { useState as w, useRef as pr, useEffect as H, useCallback as y, useMemo as D, createElement as mr } from "react";
-import { createRoot as ur } from "react-dom/client";
-const W = "task-boards", fr = "tasks", O = "2.0.0", T = [
+import o, { useState as x, useRef as V, useEffect as H, useCallback as g, useMemo as T, createElement as Ar } from "react";
+import { createRoot as Dr } from "react-dom/client";
+const cr = "task-boards", Br = "tasks", L = "2.0.0", W = [
   { id: "todo", name: "待辦", order: 0 },
   { id: "doing", name: "進行中", order: 1 },
   { id: "done", name: "已完成", order: 2 }
 ];
-function z(o) {
-  if (typeof o != "string")
-    return o;
+function F(i) {
+  if (typeof i != "string")
+    return i;
   try {
-    return JSON.parse(o);
+    return JSON.parse(i);
   } catch {
-    return o;
+    return i;
   }
 }
-function gr(o) {
-  const n = z(o);
-  if (!n || typeof n != "object")
-    return n;
-  const e = n;
-  return "data" in e ? z(e.data) : n;
+function Sr(i) {
+  const e = F(i);
+  if (!e || typeof e != "object")
+    return e;
+  const t = e;
+  return "data" in t ? F(t.data) : e;
 }
-function q(o) {
-  if (Array.isArray(o))
-    return o;
-  const n = z(o);
-  if (!n || typeof n != "object")
+function mr(i) {
+  if (Array.isArray(i))
+    return i;
+  const e = F(i);
+  if (!e || typeof e != "object")
     return null;
-  const e = n, s = ["data", "value", "payload", "tasks"];
-  for (const f of s) {
-    const m = q(e[f]);
-    if (m)
-      return m;
+  const t = e, l = ["data", "value", "payload", "tasks"];
+  for (const p of l) {
+    const u = mr(t[p]);
+    if (u)
+      return u;
   }
   return null;
 }
-function br(o) {
-  return Array.isArray(o) ? o.filter((n) => {
-    if (!n || typeof n != "object")
+function zr(i) {
+  return Array.isArray(i) ? i.filter((e) => {
+    if (!e || typeof e != "object")
       return !1;
-    const e = n;
-    return typeof e.id == "string" && typeof e.title == "string" && (e.status === "todo" || e.status === "in-progress" || e.status === "done") && typeof e.createdAt == "string";
-  }).map((n) => ({ ...n })) : [];
+    const t = e;
+    return typeof t.id == "string" && typeof t.title == "string" && (t.status === "todo" || t.status === "in-progress" || t.status === "done") && typeof t.createdAt == "string";
+  }).map((e) => ({ ...e })) : [];
 }
-function F(o) {
+function Q(i) {
   return {
     id: crypto.randomUUID(),
     name: "我的任務板",
-    columns: T.map((e) => ({ ...e })),
+    columns: W.map((t) => ({ ...t })),
     cards: [],
-    createdAt: o,
-    updatedAt: o
+    createdAt: i,
+    updatedAt: i
   };
 }
-function J() {
-  const o = (/* @__PURE__ */ new Date()).toISOString(), n = F(o);
+function ur() {
+  const i = (/* @__PURE__ */ new Date()).toISOString(), e = Q(i);
   return {
-    schemaVersion: O,
-    activeBoardId: n.id,
-    boards: [n]
+    schemaVersion: L,
+    activeBoardId: e.id,
+    boards: [e]
   };
 }
-function hr(o) {
-  if (!Array.isArray(o))
-    return T.map((e) => ({ ...e }));
-  const n = o.filter((e) => {
-    if (!e || typeof e != "object")
+function Rr(i) {
+  if (!Array.isArray(i))
+    return W.map((t) => ({ ...t }));
+  const e = i.filter((t) => {
+    if (!t || typeof t != "object")
       return !1;
-    const s = e;
-    return typeof s.id == "string" && typeof s.name == "string" && typeof s.order == "number" && Number.isFinite(s.order);
-  }).map((e) => ({
-    id: e.id,
-    name: e.name.trim() || "未命名欄位",
-    order: e.order
-  })).sort((e, s) => e.order - s.order).map((e, s) => ({ ...e, order: s }));
-  return n.length > 0 ? n : T.map((e) => ({ ...e }));
+    const l = t;
+    return typeof l.id == "string" && typeof l.name == "string" && typeof l.order == "number" && Number.isFinite(l.order);
+  }).map((t) => ({
+    id: t.id,
+    name: t.name.trim() || "未命名欄位",
+    order: t.order
+  })).sort((t, l) => t.order - l.order).map((t, l) => ({ ...t, order: l }));
+  return e.length > 0 ? e : W.map((t) => ({ ...t }));
 }
-function xr(o, n) {
-  var h;
-  if (!Array.isArray(o))
+function Or(i, e) {
+  var y;
+  if (!Array.isArray(i))
     return [];
-  const e = new Set(n.map((c) => c.id)), s = ((h = n[0]) == null ? void 0 : h.id) ?? "todo", f = o.filter((c) => {
+  const t = new Set(e.map((c) => c.id)), l = ((y = e[0]) == null ? void 0 : y.id) ?? "todo", p = i.filter((c) => {
     if (!c || typeof c != "object")
       return !1;
-    const p = c;
-    return typeof p.id == "string" && typeof p.title == "string" && typeof p.description == "string" && typeof p.columnId == "string" && typeof p.order == "number" && Number.isFinite(p.order) && typeof p.createdAt == "string" && typeof p.updatedAt == "string";
+    const m = c;
+    return typeof m.id == "string" && typeof m.title == "string" && typeof m.description == "string" && typeof m.columnId == "string" && typeof m.order == "number" && Number.isFinite(m.order) && typeof m.createdAt == "string" && typeof m.updatedAt == "string";
   }).map((c) => ({
     ...c,
     title: c.title.trim() || "未命名卡片",
-    columnId: e.has(c.columnId) ? c.columnId : s
-  })), m = /* @__PURE__ */ new Set(), x = f.map((c) => {
-    if (!m.has(c.id))
-      return m.add(c.id), c;
-    const p = crypto.randomUUID();
-    return m.add(p), {
+    columnId: t.has(c.columnId) ? c.columnId : l
+  })), u = /* @__PURE__ */ new Set(), h = p.map((c) => {
+    if (!u.has(c.id))
+      return u.add(c.id), c;
+    const m = crypto.randomUUID();
+    return u.add(m), {
       ...c,
-      id: p
+      id: m
     };
   }), v = /* @__PURE__ */ new Map();
-  for (const c of x) {
-    const p = v.get(c.columnId) ?? [];
-    p.push(c), v.set(c.columnId, p);
+  for (const c of h) {
+    const m = v.get(c.columnId) ?? [];
+    m.push(c), v.set(c.columnId, m);
   }
-  const C = [];
-  for (const [c, p] of v.entries())
-    p.sort((E, u) => E.order - u.order).forEach((E, u) => {
-      C.push({ ...E, columnId: c, order: u });
+  const _ = [];
+  for (const [c, m] of v.entries())
+    m.sort((k, f) => k.order - f.order).forEach((k, f) => {
+      _.push({ ...k, columnId: c, order: f });
     });
-  return C;
+  return _;
 }
-function yr(o) {
-  return Array.isArray(o) ? o.filter((n) => {
-    if (!n || typeof n != "object")
+function Tr(i) {
+  return Array.isArray(i) ? i.filter((e) => {
+    if (!e || typeof e != "object")
       return !1;
-    const e = n;
-    return typeof e.id == "string" && typeof e.name == "string" && typeof e.createdAt == "string" && typeof e.updatedAt == "string";
-  }).map((n) => {
-    const e = hr(n.columns), s = xr(n.cards, e);
+    const t = e;
+    return typeof t.id == "string" && typeof t.name == "string" && typeof t.createdAt == "string" && typeof t.updatedAt == "string";
+  }).map((e) => {
+    const t = Rr(e.columns), l = Or(e.cards, t);
     return {
-      id: n.id,
-      name: n.name.trim() || "未命名看板",
-      columns: e,
-      cards: s,
-      createdAt: n.createdAt,
-      updatedAt: n.updatedAt
+      id: e.id,
+      name: e.name.trim() || "未命名看板",
+      columns: t,
+      cards: l,
+      createdAt: e.createdAt,
+      updatedAt: e.updatedAt
     };
   }) : [];
 }
-function wr(o) {
-  const n = br(q(o) ?? []), e = (/* @__PURE__ */ new Date()).toISOString(), s = F(e), f = {
+function jr(i) {
+  const e = zr(mr(i) ?? []), t = (/* @__PURE__ */ new Date()).toISOString(), l = Q(t), p = {
     todo: "todo",
     "in-progress": "doing",
     done: "done"
   };
-  return s.cards = n.map((m, x) => ({
-    id: m.id,
-    title: m.title,
+  return l.cards = e.map((u, h) => ({
+    id: u.id,
+    title: u.title,
     description: "",
-    columnId: f[m.status],
-    order: x,
-    createdAt: m.createdAt,
-    updatedAt: m.createdAt
-  })), s.updatedAt = e, {
-    schemaVersion: O,
-    activeBoardId: s.id,
-    boards: [s]
+    columnId: p[u.status],
+    order: h,
+    createdAt: u.createdAt,
+    updatedAt: u.createdAt
+  })), l.updatedAt = t, {
+    schemaVersion: L,
+    activeBoardId: l.id,
+    boards: [l]
   };
 }
-function vr(o) {
-  const n = gr(o), e = z(n);
-  if (!e || typeof e != "object")
+function Fr(i) {
+  const e = Sr(i), t = F(e);
+  if (!t || typeof t != "object")
     return null;
-  const s = e, f = yr(s.boards);
-  if (f.length === 0)
+  const l = t, p = Tr(l.boards);
+  if (p.length === 0)
     return null;
-  const m = typeof s.activeBoardId == "string" && f.some((x) => x.id === s.activeBoardId) ? s.activeBoardId : f[0].id;
+  const u = typeof l.activeBoardId == "string" && p.some((h) => h.id === l.activeBoardId) ? l.activeBoardId : p[0].id;
   return {
-    schemaVersion: O,
-    activeBoardId: m,
-    boards: f
+    schemaVersion: L,
+    activeBoardId: u,
+    boards: p
   };
 }
-function B(o, n) {
-  return o.filter((e) => e.columnId === n).sort((e, s) => e.order - s.order);
+function U(i, e) {
+  return i.filter((t) => t.columnId === e).sort((t, l) => t.order - l.order);
 }
-function _r(o, n, e, s) {
-  const f = o.find((u) => u.id === n);
-  if (!f)
-    return o;
-  const m = o.filter((u) => u.id !== n), x = B(m, e), v = s === null ? x.length : Math.max(0, x.findIndex((u) => u.id === s)), C = {
-    ...f,
-    columnId: e,
+function Ur(i, e, t, l) {
+  const p = i.find((f) => f.id === e);
+  if (!p)
+    return i;
+  const u = i.filter((f) => f.id !== e), h = U(u, t), v = l === null ? h.length : Math.max(0, h.findIndex((f) => f.id === l)), _ = {
+    ...p,
+    columnId: t,
     updatedAt: (/* @__PURE__ */ new Date()).toISOString()
   };
-  x.splice(v, 0, C);
-  const h = x.map((u, _) => ({ ...u, order: _ })), c = f.columnId;
-  if (c === e)
-    return [...m.filter((_) => _.columnId !== e), ...h];
-  const p = B(m, c).map((u, _) => ({ ...u, order: _ }));
-  return [...m.filter((u) => u.columnId !== c && u.columnId !== e), ...p, ...h];
+  h.splice(v, 0, _);
+  const y = h.map((f, C) => ({ ...f, order: C })), c = p.columnId;
+  if (c === t)
+    return [...u.filter((C) => C.columnId !== t), ...y];
+  const m = U(u, c).map((f, C) => ({ ...f, order: C }));
+  return [...u.filter((f) => f.columnId !== c && f.columnId !== t), ...m, ...y];
 }
-function kr({ context: o }) {
-  const [n, e] = w(() => J()), [s, f] = w(""), [m, x] = w(""), [v, C] = w({}), [h, c] = w(null), [p, E] = w({ title: "", description: "" }), [u, _] = w(null), [Q, A] = w(null), [X, Z] = w(!1), [R, rr] = w(!1), P = pr(!1);
+function Lr({ context: i }) {
+  const [e, t] = x(() => ur()), [l, p] = x(""), [u, h] = x(null), [v, _] = x(""), [y, c] = x(null), [m, k] = x(""), [f, C] = x(""), [K, Z] = x({}), [N, D] = x(null), [A, P] = x({ title: "", description: "" }), [z, M] = x(null), [pr, B] = x(null), [fr, gr] = x(!1), [rr, br] = x(!1), nr = V(!1), G = V(!1), Y = V(!1);
   H(() => {
     let r = !1;
     return (async () => {
       try {
-        const [t, l] = await Promise.all([
-          o.storage.get(W),
-          o.storage.get(fr)
+        const [n, s] = await Promise.all([
+          i.storage.get(cr),
+          i.storage.get(Br)
         ]);
         if (r)
           return;
-        const g = vr(t);
-        if (g) {
-          e(g);
+        const w = Fr(n);
+        if (w) {
+          t(w);
           return;
         }
-        if (l) {
-          e(wr(l));
+        if (s) {
+          t(jr(s));
           return;
         }
-        e(J());
-      } catch (t) {
-        console.error("[task-board] restore failed", t);
+        t(ur());
+      } catch (n) {
+        console.error("[task-board] restore failed", n);
       } finally {
-        r || (rr(!0), Z(!0));
+        r || (br(!0), gr(!0));
       }
     })(), () => {
       r = !0;
     };
-  }, [o]), H(() => {
-    if (R) {
-      if (!P.current) {
-        P.current = !0;
+  }, [i]), H(() => {
+    if (rr) {
+      if (!nr.current) {
+        nr.current = !0;
         return;
       }
-      o.storage.save(W, n, O).then(() => {
-        const r = n.boards.reduce((d, t) => d + t.cards.length, 0);
-        return o.eventBus.emit("TASK_COUNT_CHANGED", { count: r });
+      i.storage.save(cr, e, L).then(() => {
+        const r = e.boards.reduce((a, n) => a + n.cards.length, 0);
+        return i.eventBus.emit("TASK_COUNT_CHANGED", { count: r });
       }).catch((r) => {
         console.error("[task-board] save failed", r);
       });
     }
-  }, [o, R, n]);
-  const N = y((r) => {
-    e((d) => r(d));
-  }, []), i = D(
-    () => n.boards.find((r) => r.id === n.activeBoardId) ?? n.boards[0] ?? null,
-    [n.activeBoardId, n.boards]
-  ), nr = D(
-    () => n.boards.reduce((r, d) => r + d.cards.length, 0),
-    [n.boards]
-  ), b = y(
-    (r, d) => {
-      N((t) => ({
-        ...t,
-        boards: t.boards.map((l) => l.id !== r ? l : {
-          ...d(l),
+  }, [i, rr, e]);
+  const E = g((r) => {
+    t((a) => r(a));
+  }, []), d = T(
+    () => e.boards.find((r) => r.id === e.activeBoardId) ?? e.boards[0] ?? null,
+    [e.activeBoardId, e.boards]
+  ), hr = T(
+    () => e.boards.reduce((r, a) => r + a.cards.length, 0),
+    [e.boards]
+  ), b = g(
+    (r, a) => {
+      E((n) => ({
+        ...n,
+        boards: n.boards.map((s) => s.id !== r ? s : {
+          ...a(s),
           updatedAt: (/* @__PURE__ */ new Date()).toISOString()
         })
       }));
     },
-    [N]
-  ), M = y(() => {
-    const r = s.trim();
+    [E]
+  ), er = g(() => {
+    const r = l.trim();
     if (!r)
       return;
-    const d = (/* @__PURE__ */ new Date()).toISOString(), t = F(d);
-    t.name = r, N((l) => ({
-      ...l,
-      boards: [...l.boards, t],
-      activeBoardId: t.id
-    })), f("");
-  }, [s, N]), er = y(
+    const a = (/* @__PURE__ */ new Date()).toISOString(), n = Q(a);
+    n.name = r, E((s) => ({
+      ...s,
+      boards: [...s.boards, n],
+      activeBoardId: n.id
+    })), p("");
+  }, [l, E]), tr = g(
     (r) => {
-      var l;
-      const d = n.boards.find((g) => g.id === r);
-      if (!d)
-        return;
-      const t = (l = window.prompt("輸入新的看板名稱", d.name)) == null ? void 0 : l.trim();
-      t && b(r, (g) => ({ ...g, name: t }));
+      const a = e.boards.find((n) => n.id === r);
+      a && (h(r), _(a.name), E((n) => ({
+        ...n,
+        activeBoardId: r
+      })));
     },
-    [n.boards, b]
-  ), tr = y(
+    [E, e.boards]
+  ), R = g(
     (r) => {
-      if (n.boards.length <= 1) {
+      const a = v.trim();
+      if (!a) {
+        window.alert("看板名稱不能為空。");
+        return;
+      }
+      b(r, (n) => ({ ...n, name: a })), h(null), _("");
+    },
+    [v, b]
+  ), xr = g(
+    (r) => {
+      if (u === r) {
+        R(r);
+        return;
+      }
+      tr(r);
+    },
+    [u, R, tr]
+  ), yr = g(() => {
+    h(null), _("");
+  }, []), wr = g(
+    (r) => {
+      if (e.boards.length <= 1) {
         window.alert("至少需要保留一個看板。");
         return;
       }
-      const d = n.boards.find((t) => t.id === r);
-      d && window.confirm(`確定刪除看板「${d.name}」嗎？`) && N((t) => {
-        var g;
-        const l = t.boards.filter((k) => k.id !== r);
+      const a = e.boards.find((n) => n.id === r);
+      a && window.confirm(`確定刪除看板「${a.name}」嗎？`) && E((n) => {
+        var w;
+        const s = n.boards.filter((S) => S.id !== r);
         return {
-          ...t,
-          boards: l,
-          activeBoardId: t.activeBoardId === r ? ((g = l[0]) == null ? void 0 : g.id) ?? null : t.activeBoardId
+          ...n,
+          boards: s,
+          activeBoardId: n.activeBoardId === r ? ((w = s[0]) == null ? void 0 : w.id) ?? null : n.activeBoardId
         };
       });
     },
-    [N, n.boards]
-  ), K = y(() => {
-    if (!i)
+    [E, e.boards]
+  ), ar = g(() => {
+    if (!d)
       return;
-    const r = m.trim();
-    r && (b(i.id, (d) => ({
-      ...d,
-      columns: [...d.columns, { id: crypto.randomUUID(), name: r, order: d.columns.length }]
-    })), x(""));
-  }, [i, m, b]), ar = y(
+    const r = f.trim();
+    r && (b(d.id, (a) => ({
+      ...a,
+      columns: [...a.columns, { id: crypto.randomUUID(), name: r, order: a.columns.length }]
+    })), C(""));
+  }, [d, f, b]), or = g(
     (r) => {
-      var l;
-      if (!i)
-        return;
-      const d = i.columns.find((g) => g.id === r);
       if (!d)
         return;
-      const t = (l = window.prompt("輸入新的欄位名稱", d.name)) == null ? void 0 : l.trim();
-      t && b(i.id, (g) => ({
-        ...g,
-        columns: g.columns.map((k) => k.id === r ? { ...k, name: t } : k)
-      }));
+      const a = d.columns.find((n) => n.id === r);
+      a && (c(r), k(a.name));
     },
-    [i, b]
-  ), or = y(
+    [d]
+  ), O = g(
     (r) => {
-      if (!i || i.columns.length <= 1) {
+      if (!d)
+        return;
+      const a = m.trim();
+      if (!a) {
+        window.alert("欄位名稱不能為空。");
+        return;
+      }
+      b(d.id, (n) => ({
+        ...n,
+        columns: n.columns.map((s) => s.id === r ? { ...s, name: a } : s)
+      })), c(null), k("");
+    },
+    [d, m, b]
+  ), vr = g(
+    (r) => {
+      if (y === r) {
+        O(r);
+        return;
+      }
+      or(r);
+    },
+    [y, O, or]
+  ), $ = g(() => {
+    c(null), k("");
+  }, []);
+  H(() => {
+    if (!d || !y)
+      return;
+    d.columns.some((a) => a.id === y) || $();
+  }, [d, $, y]);
+  const _r = g(
+    (r) => {
+      if (!d || d.columns.length <= 1) {
         window.alert("至少需要保留一個欄位。");
         return;
       }
-      const d = i.columns.find((t) => t.id === r);
-      d && window.confirm(`確定刪除欄位「${d.name}」嗎？卡片會移到第一欄。`) && b(i.id, (t) => {
-        var V;
-        const l = t.columns.filter((I) => I.id !== r).map((I, cr) => ({ ...I, order: cr })), g = (V = l[0]) == null ? void 0 : V.id, k = g ? t.cards.map((I) => I.columnId === r ? { ...I, columnId: g } : I) : t.cards;
+      const a = d.columns.find((n) => n.id === r);
+      a && window.confirm(`確定刪除欄位「${a.name}」嗎？卡片會移到第一欄。`) && b(d.id, (n) => {
+        var lr;
+        const s = n.columns.filter((I) => I.id !== r).map((I, Ir) => ({ ...I, order: Ir })), w = (lr = s[0]) == null ? void 0 : lr.id, S = w ? n.cards.map((I) => I.columnId === r ? { ...I, columnId: w } : I) : n.cards;
         return {
-          ...t,
-          columns: l,
-          cards: k
+          ...n,
+          columns: s,
+          cards: S
         };
       });
     },
-    [i, b]
-  ), G = y(
+    [d, b]
+  ), ir = g(
     (r) => {
-      if (!i)
-        return;
-      const d = (v[r] ?? "").trim();
       if (!d)
         return;
-      const t = (/* @__PURE__ */ new Date()).toISOString();
-      b(i.id, (l) => {
-        const g = B(l.cards, r), k = {
+      const a = (K[r] ?? "").trim();
+      if (!a)
+        return;
+      const n = (/* @__PURE__ */ new Date()).toISOString();
+      b(d.id, (s) => {
+        const w = U(s.cards, r), S = {
           id: crypto.randomUUID(),
-          title: d,
+          title: a,
           description: "",
           columnId: r,
-          order: g.length,
-          createdAt: t,
-          updatedAt: t
+          order: w.length,
+          createdAt: n,
+          updatedAt: n
         };
         return {
-          ...l,
-          cards: [...l.cards, k]
+          ...s,
+          cards: [...s.cards, S]
         };
-      }), C((l) => ({ ...l, [r]: "" }));
+      }), Z((s) => ({ ...s, [r]: "" }));
     },
-    [i, v, b]
-  ), Y = y(
+    [d, K, b]
+  ), dr = g(
     (r) => {
-      if (!i)
+      if (!d)
         return;
-      const d = i.cards.find((t) => t.id === r);
-      d && (c(r), E({ title: d.title, description: d.description }));
+      const a = d.cards.find((n) => n.id === r);
+      a && (D(r), P({ title: a.title, description: a.description }));
     },
-    [i]
-  ), dr = y(() => {
-    if (!i || !h)
+    [d]
+  ), kr = g(() => {
+    if (!d || !N)
       return;
-    const r = p.title.trim();
+    const r = A.title.trim();
     if (!r) {
       window.alert("標題不能為空");
       return;
     }
-    b(i.id, (d) => ({
-      ...d,
-      cards: d.cards.map(
-        (t) => t.id === h ? {
-          ...t,
+    b(d.id, (a) => ({
+      ...a,
+      cards: a.cards.map(
+        (n) => n.id === N ? {
+          ...n,
           title: r,
-          description: p.description.trim(),
+          description: A.description.trim(),
           updatedAt: (/* @__PURE__ */ new Date()).toISOString()
-        } : t
+        } : n
       )
-    })), c(null);
-  }, [i, p.description, p.title, h, b]), ir = y(
+    })), D(null);
+  }, [d, A.description, A.title, N, b]), Er = g(
     (r) => {
-      i && (b(i.id, (d) => ({
-        ...d,
-        cards: d.cards.filter((t) => t.id !== r)
-      })), h === r && c(null));
+      d && (b(d.id, (a) => ({
+        ...a,
+        cards: a.cards.filter((n) => n.id !== r)
+      })), N === r && D(null));
     },
-    [i, h, b]
-  ), $ = y(
-    (r, d) => {
-      !i || !u || (b(i.id, (t) => ({
-        ...t,
-        cards: _r(t.cards, u, r, d)
-      })), _(null), A(null));
+    [d, N, b]
+  ), sr = g(
+    (r, a) => {
+      !d || !z || (b(d.id, (n) => ({
+        ...n,
+        cards: Ur(n.cards, z, r, a)
+      })), M(null), B(null));
     },
-    [i, u, b]
-  ), sr = D(() => !i || !h ? null : i.cards.find((r) => r.id === h) ?? null, [i, h]), lr = D(() => i ? [...i.columns].sort((r, d) => r.order - d.order) : [], [i]);
-  return /* @__PURE__ */ a.createElement("section", { className: "kanban-shell", "aria-busy": !X }, /* @__PURE__ */ a.createElement("aside", { className: "board-sidebar" }, /* @__PURE__ */ a.createElement("div", { className: "board-sidebar__head" }, /* @__PURE__ */ a.createElement("p", { className: "board-sidebar__eyebrow" }, "Orbit Board"), /* @__PURE__ */ a.createElement("h1", null, "我的看板"), /* @__PURE__ */ a.createElement("p", { className: "board-sidebar__count" }, "總卡片: ", nr)), /* @__PURE__ */ a.createElement("div", { className: "board-sidebar__composer" }, /* @__PURE__ */ a.createElement("label", { htmlFor: "new-board", className: "sr-only" }, "新增看板"), /* @__PURE__ */ a.createElement(
+    [d, z, b]
+  ), Cr = T(() => !d || !N ? null : d.cards.find((r) => r.id === N) ?? null, [d, N]), Nr = T(() => d ? [...d.columns].sort((r, a) => r.order - a.order) : [], [d]);
+  return /* @__PURE__ */ o.createElement("section", { className: "kanban-shell", "aria-busy": !fr }, /* @__PURE__ */ o.createElement("aside", { className: "board-sidebar" }, /* @__PURE__ */ o.createElement("div", { className: "board-sidebar__head" }, /* @__PURE__ */ o.createElement("p", { className: "board-sidebar__eyebrow" }, "Orbit Board"), /* @__PURE__ */ o.createElement("h1", null, "我的看板"), /* @__PURE__ */ o.createElement("p", { className: "board-sidebar__count" }, "總卡片: ", hr)), /* @__PURE__ */ o.createElement("div", { className: "board-sidebar__composer" }, /* @__PURE__ */ o.createElement("label", { htmlFor: "new-board", className: "sr-only" }, "新增看板"), /* @__PURE__ */ o.createElement(
     "input",
     {
       id: "new-board",
       type: "text",
       placeholder: "新增看板名稱",
-      value: s,
-      onChange: (r) => f(r.target.value),
+      value: l,
+      onChange: (r) => p(r.target.value),
       onKeyDown: (r) => {
-        r.key === "Enter" && M();
+        r.key === "Enter" && er();
       }
     }
-  ), /* @__PURE__ */ a.createElement("button", { type: "button", onClick: M }, "建立看板")), /* @__PURE__ */ a.createElement("ul", { className: "board-list", role: "list" }, n.boards.map((r) => /* @__PURE__ */ a.createElement("li", { key: r.id }, /* @__PURE__ */ a.createElement(
+  ), /* @__PURE__ */ o.createElement("button", { type: "button", onClick: er }, "建立看板")), /* @__PURE__ */ o.createElement("ul", { className: "board-list", role: "list" }, e.boards.map((r) => /* @__PURE__ */ o.createElement("li", { key: r.id }, /* @__PURE__ */ o.createElement(
     "button",
     {
       type: "button",
-      className: r.id === (i == null ? void 0 : i.id) ? "board-item board-item--active" : "board-item",
-      onClick: () => N((d) => ({ ...d, activeBoardId: r.id }))
+      className: r.id === (d == null ? void 0 : d.id) ? "board-item board-item--active" : "board-item",
+      onClick: () => E((a) => ({ ...a, activeBoardId: r.id }))
     },
-    /* @__PURE__ */ a.createElement("span", null, r.name),
-    /* @__PURE__ */ a.createElement("small", null, r.cards.length)
-  ), /* @__PURE__ */ a.createElement("div", { className: "board-item__actions" }, /* @__PURE__ */ a.createElement("button", { type: "button", className: "ghost", onClick: () => er(r.id) }, "改名"), /* @__PURE__ */ a.createElement("button", { type: "button", className: "danger", onClick: () => tr(r.id) }, "刪除")))))), /* @__PURE__ */ a.createElement("div", { className: "kanban-workspace" }, /* @__PURE__ */ a.createElement("header", { className: "workspace-header" }, /* @__PURE__ */ a.createElement("div", null, /* @__PURE__ */ a.createElement("p", { className: "workspace-header__eyebrow" }, "Task Workspace"), /* @__PURE__ */ a.createElement("h2", null, (i == null ? void 0 : i.name) ?? "未選擇看板")), /* @__PURE__ */ a.createElement("div", { className: "workspace-header__column-composer" }, /* @__PURE__ */ a.createElement("label", { htmlFor: "new-column", className: "sr-only" }, "新增欄位"), /* @__PURE__ */ a.createElement(
+    /* @__PURE__ */ o.createElement("span", null, r.name),
+    /* @__PURE__ */ o.createElement("small", null, r.cards.length)
+  ), /* @__PURE__ */ o.createElement("div", { className: "board-item__actions" }, /* @__PURE__ */ o.createElement(
+    "button",
+    {
+      type: "button",
+      className: "ghost",
+      "data-board-rename-id": r.id,
+      onClick: () => xr(r.id)
+    },
+    u === r.id ? "保存" : "改名"
+  ), /* @__PURE__ */ o.createElement("button", { type: "button", className: "danger", onClick: () => wr(r.id) }, "刪除")))))), /* @__PURE__ */ o.createElement("div", { className: "kanban-workspace" }, /* @__PURE__ */ o.createElement("header", { className: "workspace-header" }, /* @__PURE__ */ o.createElement("div", null, /* @__PURE__ */ o.createElement("p", { className: "workspace-header__eyebrow" }, "Task Workspace"), d && u === d.id ? /* @__PURE__ */ o.createElement(
+    "input",
+    {
+      type: "text",
+      className: "workspace-header__title-input",
+      value: v,
+      onChange: (r) => _(r.target.value),
+      onKeyDown: (r) => {
+        r.key === "Enter" && R(d.id), r.key === "Escape" && (G.current = !0, yr());
+      },
+      onBlur: (r) => {
+        const a = r.relatedTarget;
+        if ((a == null ? void 0 : a.dataset.boardRenameId) !== d.id) {
+          if (G.current) {
+            G.current = !1;
+            return;
+          }
+          R(d.id);
+        }
+      },
+      autoFocus: !0,
+      "aria-label": "編輯看板名稱"
+    }
+  ) : /* @__PURE__ */ o.createElement("h2", null, (d == null ? void 0 : d.name) ?? "未選擇看板")), /* @__PURE__ */ o.createElement("div", { className: "workspace-header__column-composer" }, /* @__PURE__ */ o.createElement("label", { htmlFor: "new-column", className: "sr-only" }, "新增欄位"), /* @__PURE__ */ o.createElement(
     "input",
     {
       id: "new-column",
       type: "text",
       placeholder: "新增欄位名稱",
-      value: m,
-      onChange: (r) => x(r.target.value),
+      value: f,
+      onChange: (r) => C(r.target.value),
       onKeyDown: (r) => {
-        r.key === "Enter" && K();
+        r.key === "Enter" && ar();
       }
     }
-  ), /* @__PURE__ */ a.createElement("button", { type: "button", onClick: K }, "新增欄位"))), /* @__PURE__ */ a.createElement("div", { className: "lanes" }, lr.map((r) => {
-    const d = i ? B(i.cards, r.id) : [];
-    return /* @__PURE__ */ a.createElement(
+  ), /* @__PURE__ */ o.createElement("button", { type: "button", onClick: ar }, "新增欄位"))), /* @__PURE__ */ o.createElement("div", { className: "lanes" }, Nr.map((r) => {
+    const a = d ? U(d.cards, r.id) : [];
+    return /* @__PURE__ */ o.createElement(
       "article",
       {
         key: r.id,
-        className: Q === r.id ? "lane lane--drop" : "lane",
-        onDragOver: (t) => {
-          t.preventDefault(), A(r.id);
+        className: pr === r.id ? "lane lane--drop" : "lane",
+        onDragOver: (n) => {
+          n.preventDefault(), B(r.id);
         },
-        onDragLeave: () => A((t) => t === r.id ? null : t),
-        onDrop: (t) => {
-          t.preventDefault(), $(r.id, null);
+        onDragLeave: () => B((n) => n === r.id ? null : n),
+        onDrop: (n) => {
+          n.preventDefault(), sr(r.id, null);
         }
       },
-      /* @__PURE__ */ a.createElement("header", { className: "lane__header" }, /* @__PURE__ */ a.createElement("h3", null, r.name), /* @__PURE__ */ a.createElement("span", null, d.length)),
-      /* @__PURE__ */ a.createElement("div", { className: "lane__header-actions" }, /* @__PURE__ */ a.createElement("button", { type: "button", className: "ghost", onClick: () => ar(r.id) }, "改名"), /* @__PURE__ */ a.createElement("button", { type: "button", className: "danger", onClick: () => or(r.id) }, "刪除")),
-      /* @__PURE__ */ a.createElement("div", { className: "lane__composer" }, /* @__PURE__ */ a.createElement("label", { htmlFor: `new-card-${r.id}`, className: "sr-only" }, "新增卡片"), /* @__PURE__ */ a.createElement(
+      /* @__PURE__ */ o.createElement("header", { className: "lane__header" }, y === r.id ? /* @__PURE__ */ o.createElement(
+        "input",
+        {
+          type: "text",
+          className: "lane__title-input",
+          value: m,
+          onChange: (n) => k(n.target.value),
+          onKeyDown: (n) => {
+            n.key === "Enter" && O(r.id), n.key === "Escape" && (Y.current = !0, $());
+          },
+          onBlur: (n) => {
+            const s = n.relatedTarget;
+            if ((s == null ? void 0 : s.dataset.columnRenameId) !== r.id) {
+              if (Y.current) {
+                Y.current = !1;
+                return;
+              }
+              O(r.id);
+            }
+          },
+          autoFocus: !0,
+          "aria-label": "編輯欄位名稱"
+        }
+      ) : /* @__PURE__ */ o.createElement("h3", null, r.name), /* @__PURE__ */ o.createElement("span", null, a.length)),
+      /* @__PURE__ */ o.createElement("div", { className: "lane__header-actions" }, /* @__PURE__ */ o.createElement(
+        "button",
+        {
+          type: "button",
+          className: "ghost",
+          "data-column-rename-id": r.id,
+          onClick: () => vr(r.id)
+        },
+        y === r.id ? "保存" : "改名"
+      ), /* @__PURE__ */ o.createElement("button", { type: "button", className: "danger", onClick: () => _r(r.id) }, "刪除")),
+      /* @__PURE__ */ o.createElement("div", { className: "lane__composer" }, /* @__PURE__ */ o.createElement("label", { htmlFor: `new-card-${r.id}`, className: "sr-only" }, "新增卡片"), /* @__PURE__ */ o.createElement(
         "input",
         {
           id: `new-card-${r.id}`,
           type: "text",
           placeholder: "新增卡片標題",
-          value: v[r.id] ?? "",
-          onChange: (t) => C((l) => ({
-            ...l,
-            [r.id]: t.target.value
+          value: K[r.id] ?? "",
+          onChange: (n) => Z((s) => ({
+            ...s,
+            [r.id]: n.target.value
           })),
-          onKeyDown: (t) => {
-            t.key === "Enter" && G(r.id);
+          onKeyDown: (n) => {
+            n.key === "Enter" && ir(r.id);
           }
         }
-      ), /* @__PURE__ */ a.createElement("button", { type: "button", onClick: () => G(r.id) }, "新增卡片")),
-      /* @__PURE__ */ a.createElement("ul", { className: "card-list", role: "list" }, d.map((t) => /* @__PURE__ */ a.createElement(
+      ), /* @__PURE__ */ o.createElement("button", { type: "button", onClick: () => ir(r.id) }, "新增卡片")),
+      /* @__PURE__ */ o.createElement("ul", { className: "card-list", role: "list" }, a.map((n) => /* @__PURE__ */ o.createElement(
         "li",
         {
-          key: t.id,
-          className: u === t.id ? "card card--dragging" : "card",
+          key: n.id,
+          className: z === n.id ? "card card--dragging" : "card",
           draggable: !0,
-          onDragStart: (l) => {
-            l.dataTransfer.effectAllowed = "move", _(t.id);
+          onDragStart: (s) => {
+            s.dataTransfer.effectAllowed = "move", M(n.id);
           },
           onDragEnd: () => {
-            _(null), A(null);
+            M(null), B(null);
           },
-          onDragOver: (l) => {
-            l.preventDefault(), A(r.id);
+          onDragOver: (s) => {
+            s.preventDefault(), B(r.id);
           },
-          onDrop: (l) => {
-            l.preventDefault(), $(r.id, t.id);
+          onDrop: (s) => {
+            s.preventDefault(), sr(r.id, n.id);
           }
         },
-        /* @__PURE__ */ a.createElement("button", { type: "button", className: "card__body", onClick: () => Y(t.id) }, /* @__PURE__ */ a.createElement("p", null, t.title), /* @__PURE__ */ a.createElement("small", null, t.description ? "已填寫詳情" : "尚無詳情")),
-        /* @__PURE__ */ a.createElement("div", { className: "card__actions" }, /* @__PURE__ */ a.createElement("button", { type: "button", className: "ghost", onClick: () => Y(t.id) }, "編輯"), /* @__PURE__ */ a.createElement("button", { type: "button", className: "danger", onClick: () => ir(t.id) }, "刪除"))
+        /* @__PURE__ */ o.createElement("button", { type: "button", className: "card__body", onClick: () => dr(n.id) }, /* @__PURE__ */ o.createElement("p", null, n.title), /* @__PURE__ */ o.createElement("small", null, n.description ? "已填寫詳情" : "尚無詳情")),
+        /* @__PURE__ */ o.createElement("div", { className: "card__actions" }, /* @__PURE__ */ o.createElement("button", { type: "button", className: "ghost", onClick: () => dr(n.id) }, "編輯"), /* @__PURE__ */ o.createElement("button", { type: "button", className: "danger", onClick: () => Er(n.id) }, "刪除"))
       )))
     );
-  }))), sr && /* @__PURE__ */ a.createElement("div", { className: "modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "card-modal-title" }, /* @__PURE__ */ a.createElement("div", { className: "modal__panel" }, /* @__PURE__ */ a.createElement("header", { className: "modal__header" }, /* @__PURE__ */ a.createElement("h4", { id: "card-modal-title" }, "卡片詳情"), /* @__PURE__ */ a.createElement("button", { type: "button", className: "ghost", onClick: () => c(null) }, "關閉")), /* @__PURE__ */ a.createElement("label", { htmlFor: "card-title" }, "標題"), /* @__PURE__ */ a.createElement(
+  }))), Cr && /* @__PURE__ */ o.createElement("div", { className: "modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "card-modal-title" }, /* @__PURE__ */ o.createElement("div", { className: "modal__panel" }, /* @__PURE__ */ o.createElement("header", { className: "modal__header" }, /* @__PURE__ */ o.createElement("h4", { id: "card-modal-title" }, "卡片詳情"), /* @__PURE__ */ o.createElement("button", { type: "button", className: "ghost", onClick: () => D(null) }, "關閉")), /* @__PURE__ */ o.createElement("label", { htmlFor: "card-title" }, "標題"), /* @__PURE__ */ o.createElement(
     "input",
     {
       id: "card-title",
       type: "text",
-      value: p.title,
-      onChange: (r) => E((d) => ({ ...d, title: r.target.value }))
+      value: A.title,
+      onChange: (r) => P((a) => ({ ...a, title: r.target.value }))
     }
-  ), /* @__PURE__ */ a.createElement("label", { htmlFor: "card-desc" }, "描述"), /* @__PURE__ */ a.createElement(
+  ), /* @__PURE__ */ o.createElement("label", { htmlFor: "card-desc" }, "描述"), /* @__PURE__ */ o.createElement(
     "textarea",
     {
       id: "card-desc",
       rows: 5,
       placeholder: "輸入和這張卡片相關的資訊",
-      value: p.description,
-      onChange: (r) => E((d) => ({ ...d, description: r.target.value }))
+      value: A.description,
+      onChange: (r) => P((a) => ({ ...a, description: r.target.value }))
     }
-  ), /* @__PURE__ */ a.createElement("div", { className: "modal__actions" }, /* @__PURE__ */ a.createElement("button", { type: "button", className: "ghost", onClick: () => c(null) }, "取消"), /* @__PURE__ */ a.createElement("button", { type: "button", onClick: dr }, "儲存")))));
+  ), /* @__PURE__ */ o.createElement("div", { className: "modal__actions" }, /* @__PURE__ */ o.createElement("button", { type: "button", className: "ghost", onClick: () => D(null) }, "取消"), /* @__PURE__ */ o.createElement("button", { type: "button", onClick: kr }, "儲存")))));
 }
-const Er = `body {\r
+const Kr = `body {\r
   color-scheme: light;\r
   --bg-1: #fff8e7;\r
   --bg-2: #dceeff;\r
@@ -605,6 +714,13 @@ input {\r
   background: #fff;\r
   font-size: 16px;\r
   color: var(--ink);\r
+.lane__title-input {\r
+  min-height: 40px;\r
+  font-size: 1rem;\r
+  font-weight: 700;\r
+  border: 1px solid #9bc3ff;\r
+  background: #ffffff;\r
+}\r
 }\r
 \r
 textarea {\r
@@ -752,6 +868,15 @@ input:focus-visible {\r
 \r
 .workspace-header h2 {\r
   font-size: clamp(1.2rem, 2vw, 1.8rem);\r
+}\r
+\r
+.workspace-header__title-input {\r
+  min-height: 44px;\r
+  min-width: min(520px, 100%);\r
+  font-size: clamp(1.1rem, 1.8vw, 1.6rem);\r
+  font-weight: 700;\r
+  border: 1px solid #9bc3ff;\r
+  background: #ffffff;\r
 }\r
 \r
 .workspace-header__column-composer {\r
@@ -949,37 +1074,37 @@ input:focus-visible {\r
     overflow-y: visible;\r
   }\r
 }\r
-`, L = "plugin-task-board", j = `${L}-styles`;
-let S = 0;
-const U = /* @__PURE__ */ new WeakMap();
-function Cr(o, n) {
-  if (!document.getElementById(j)) {
-    const f = document.createElement("style");
-    f.id = j, f.textContent = Er, document.head.appendChild(f);
+`, X = "plugin-task-board", J = `${X}-styles`;
+let j = 0;
+const q = /* @__PURE__ */ new WeakMap();
+function Pr(i, e) {
+  if (!document.getElementById(J)) {
+    const p = document.createElement("style");
+    p.id = J, p.textContent = Kr, document.head.appendChild(p);
   }
-  S++;
-  const e = document.createElement("div");
-  e.id = L, o.appendChild(e);
-  const s = ur(e);
-  U.set(o, s), s.render(mr(kr, { context: n }));
+  j++;
+  const t = document.createElement("div");
+  t.id = X, i.appendChild(t);
+  const l = Dr(t);
+  q.set(i, l), l.render(Ar(Lr, { context: e }));
 }
-function Nr(o) {
-  const n = U.get(o);
-  if (n && (n.unmount(), U.delete(o)), o.innerHTML = "", S = Math.max(0, S - 1), S === 0) {
-    const e = document.getElementById(j);
-    e && e.remove();
+function Mr(i) {
+  const e = q.get(i);
+  if (e && (e.unmount(), q.delete(i)), i.innerHTML = "", j = Math.max(0, j - 1), j === 0) {
+    const t = document.getElementById(J);
+    t && t.remove();
   }
 }
-const Dr = {
-  id: L,
-  mount(o, n) {
-    Cr(o, n);
+const $r = {
+  id: X,
+  mount(i, e) {
+    Pr(i, e);
   },
-  unmount(o) {
-    Nr(o);
+  unmount(i) {
+    Mr(i);
   }
 };
 export {
-  Dr as default
+  $r as default
 };
 //# sourceMappingURL=plugin.js.map

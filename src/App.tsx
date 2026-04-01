@@ -377,6 +377,10 @@ function moveCardWithOrder(
 export function App({ context }: IAppProps) {
   const [store, setStore] = useState<IBoardStore>(() => createDefaultStore());
   const [draftBoardName, setDraftBoardName] = useState('');
+  const [editingBoardId, setEditingBoardId] = useState<string | null>(null);
+  const [renameBoardName, setRenameBoardName] = useState('');
+  const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
+  const [renameColumnName, setRenameColumnName] = useState('');
   const [draftColumnName, setDraftColumnName] = useState('');
   const [draftCardByColumn, setDraftCardByColumn] = useState<Record<string, string>>({});
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -386,6 +390,8 @@ export function App({ context }: IAppProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const firstPersistSkippedRef = useRef(false);
+  const skipNextBoardBlurSaveRef = useRef(false);
+  const skipNextColumnBlurSaveRef = useRef(false);
 
   useEffect(() => {
     let isCancelled = false;
@@ -502,22 +508,54 @@ export function App({ context }: IAppProps) {
     setDraftBoardName('');
   }, [draftBoardName, mutateStore]);
 
-  const renameBoard = useCallback(
+  const startRenameBoard = useCallback(
     (boardId: string) => {
       const board = store.boards.find((item) => item.id === boardId);
       if (!board) {
         return;
       }
 
-      const name = window.prompt('輸入新的看板名稱', board.name)?.trim();
+      setEditingBoardId(boardId);
+      setRenameBoardName(board.name);
+      mutateStore((prev) => ({
+        ...prev,
+        activeBoardId: boardId
+      }));
+    },
+    [mutateStore, store.boards]
+  );
+
+  const saveRenameBoard = useCallback(
+    (boardId: string) => {
+      const name = renameBoardName.trim();
       if (!name) {
+        window.alert('看板名稱不能為空。');
         return;
       }
 
       updateBoardById(boardId, (current) => ({ ...current, name }));
+      setEditingBoardId(null);
+      setRenameBoardName('');
     },
-    [store.boards, updateBoardById]
+    [renameBoardName, updateBoardById]
   );
+
+  const handleRenameBoard = useCallback(
+    (boardId: string) => {
+      if (editingBoardId === boardId) {
+        saveRenameBoard(boardId);
+        return;
+      }
+
+      startRenameBoard(boardId);
+    },
+    [editingBoardId, saveRenameBoard, startRenameBoard]
+  );
+
+  const cancelRenameBoard = useCallback(() => {
+    setEditingBoardId(null);
+    setRenameBoardName('');
+  }, []);
 
   const removeBoard = useCallback(
     (boardId: string) => {
@@ -564,7 +602,7 @@ export function App({ context }: IAppProps) {
     setDraftColumnName('');
   }, [activeBoard, draftColumnName, updateBoardById]);
 
-  const renameColumn = useCallback(
+  const startRenameColumn = useCallback(
     (columnId: string) => {
       if (!activeBoard) {
         return;
@@ -575,8 +613,21 @@ export function App({ context }: IAppProps) {
         return;
       }
 
-      const name = window.prompt('輸入新的欄位名稱', column.name)?.trim();
+      setEditingColumnId(columnId);
+      setRenameColumnName(column.name);
+    },
+    [activeBoard]
+  );
+
+  const saveRenameColumn = useCallback(
+    (columnId: string) => {
+      if (!activeBoard) {
+        return;
+      }
+
+      const name = renameColumnName.trim();
       if (!name) {
+        window.alert('欄位名稱不能為空。');
         return;
       }
 
@@ -584,9 +635,39 @@ export function App({ context }: IAppProps) {
         ...board,
         columns: board.columns.map((item) => (item.id === columnId ? { ...item, name } : item))
       }));
+      setEditingColumnId(null);
+      setRenameColumnName('');
     },
-    [activeBoard, updateBoardById]
+    [activeBoard, renameColumnName, updateBoardById]
   );
+
+  const handleRenameColumn = useCallback(
+    (columnId: string) => {
+      if (editingColumnId === columnId) {
+        saveRenameColumn(columnId);
+        return;
+      }
+
+      startRenameColumn(columnId);
+    },
+    [editingColumnId, saveRenameColumn, startRenameColumn]
+  );
+
+  const cancelRenameColumn = useCallback(() => {
+    setEditingColumnId(null);
+    setRenameColumnName('');
+  }, []);
+
+  useEffect(() => {
+    if (!activeBoard || !editingColumnId) {
+      return;
+    }
+
+    const exists = activeBoard.columns.some((column) => column.id === editingColumnId);
+    if (!exists) {
+      cancelRenameColumn();
+    }
+  }, [activeBoard, cancelRenameColumn, editingColumnId]);
 
   const removeColumn = useCallback(
     (columnId: string) => {
@@ -797,8 +878,13 @@ export function App({ context }: IAppProps) {
                 <small>{board.cards.length}</small>
               </button>
               <div className="board-item__actions">
-                <button type="button" className="ghost" onClick={() => renameBoard(board.id)}>
-                  改名
+                <button
+                  type="button"
+                  className="ghost"
+                  data-board-rename-id={board.id}
+                  onClick={() => handleRenameBoard(board.id)}
+                >
+                  {editingBoardId === board.id ? '保存' : '改名'}
                 </button>
                 <button type="button" className="danger" onClick={() => removeBoard(board.id)}>
                   刪除
@@ -813,7 +899,41 @@ export function App({ context }: IAppProps) {
         <header className="workspace-header">
           <div>
             <p className="workspace-header__eyebrow">Task Workspace</p>
-            <h2>{activeBoard?.name ?? '未選擇看板'}</h2>
+            {activeBoard && editingBoardId === activeBoard.id ? (
+              <input
+                type="text"
+                className="workspace-header__title-input"
+                value={renameBoardName}
+                onChange={(event) => setRenameBoardName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    saveRenameBoard(activeBoard.id);
+                  }
+
+                  if (event.key === 'Escape') {
+                    skipNextBoardBlurSaveRef.current = true;
+                    cancelRenameBoard();
+                  }
+                }}
+                onBlur={(event) => {
+                  const nextTarget = event.relatedTarget as HTMLElement | null;
+                  if (nextTarget?.dataset.boardRenameId === activeBoard.id) {
+                    return;
+                  }
+
+                  if (skipNextBoardBlurSaveRef.current) {
+                    skipNextBoardBlurSaveRef.current = false;
+                    return;
+                  }
+
+                  saveRenameBoard(activeBoard.id);
+                }}
+                autoFocus
+                aria-label="編輯看板名稱"
+              />
+            ) : (
+              <h2>{activeBoard?.name ?? '未選擇看板'}</h2>
+            )}
           </div>
           <div className="workspace-header__column-composer">
             <label htmlFor="new-column" className="sr-only">
@@ -856,13 +976,52 @@ export function App({ context }: IAppProps) {
                 }}
               >
                 <header className="lane__header">
-                  <h3>{column.name}</h3>
+                  {editingColumnId === column.id ? (
+                    <input
+                      type="text"
+                      className="lane__title-input"
+                      value={renameColumnName}
+                      onChange={(event) => setRenameColumnName(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          saveRenameColumn(column.id);
+                        }
+
+                        if (event.key === 'Escape') {
+                          skipNextColumnBlurSaveRef.current = true;
+                          cancelRenameColumn();
+                        }
+                      }}
+                      onBlur={(event) => {
+                        const nextTarget = event.relatedTarget as HTMLElement | null;
+                        if (nextTarget?.dataset.columnRenameId === column.id) {
+                          return;
+                        }
+
+                        if (skipNextColumnBlurSaveRef.current) {
+                          skipNextColumnBlurSaveRef.current = false;
+                          return;
+                        }
+
+                        saveRenameColumn(column.id);
+                      }}
+                      autoFocus
+                      aria-label="編輯欄位名稱"
+                    />
+                  ) : (
+                    <h3>{column.name}</h3>
+                  )}
                   <span>{cards.length}</span>
                 </header>
 
                 <div className="lane__header-actions">
-                  <button type="button" className="ghost" onClick={() => renameColumn(column.id)}>
-                    改名
+                  <button
+                    type="button"
+                    className="ghost"
+                    data-column-rename-id={column.id}
+                    onClick={() => handleRenameColumn(column.id)}
+                  >
+                    {editingColumnId === column.id ? '保存' : '改名'}
                   </button>
                   <button type="button" className="danger" onClick={() => removeColumn(column.id)}>
                     刪除
