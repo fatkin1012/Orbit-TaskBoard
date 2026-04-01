@@ -527,9 +527,17 @@ export function App({ context }: IAppProps) {
 
   const saveRenameBoard = useCallback(
     (boardId: string) => {
+      const board = store.boards.find((item) => item.id === boardId);
+      if (!board) {
+        setEditingBoardId(null);
+        setRenameBoardName('');
+        return;
+      }
+
       const name = renameBoardName.trim();
       if (!name) {
-        window.alert('看板名稱不能為空。');
+        setEditingBoardId(null);
+        setRenameBoardName('');
         return;
       }
 
@@ -537,7 +545,7 @@ export function App({ context }: IAppProps) {
       setEditingBoardId(null);
       setRenameBoardName('');
     },
-    [renameBoardName, updateBoardById]
+    [renameBoardName, store.boards, updateBoardById]
   );
 
   const handleRenameBoard = useCallback(
@@ -625,9 +633,17 @@ export function App({ context }: IAppProps) {
         return;
       }
 
+      const column = activeBoard.columns.find((item) => item.id === columnId);
+      if (!column) {
+        setEditingColumnId(null);
+        setRenameColumnName('');
+        return;
+      }
+
       const name = renameColumnName.trim();
       if (!name) {
-        window.alert('欄位名稱不能為空。');
+        setEditingColumnId(null);
+        setRenameColumnName('');
         return;
       }
 
