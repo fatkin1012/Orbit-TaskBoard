@@ -12,10 +12,23 @@ interface ICard {
   id: string;
   title: string;
   description: string;
+  reportId?: string;
   columnId: string;
   order: number;
   createdAt: string;
   updatedAt: string;
+}
+
+interface IReportLoggerOpenOrCreatePayload {
+  sourcePluginId: string;
+  targetPluginId: string;
+  boardId: string;
+  cardId: string;
+  cardTitle: string;
+  cardDescription: string;
+  reportId?: string;
+  mode: 'open' | 'create';
+  requestedAt: string;
 }
 
 interface IColumn {
@@ -47,7 +60,10 @@ type TDropPlacement = 'before' | 'after';
 
 const STORAGE_KEY = 'task-boards';
 const LEGACY_STORAGE_KEY = 'tasks';
-const STORAGE_VERSION = '2.0.0';
+const STORAGE_VERSION = '2.1.0';
+const SOURCE_PLUGIN_ID = 'plugin-task-board';
+const REPORT_LOGGER_PLUGIN_ID = 'report-logger';
+const REPORT_LOGGER_OPEN_OR_CREATE_EVENT = 'REPORT_LOGGER:OPEN_OR_CREATE';
 
 const DEFAULT_COLUMNS: IColumn[] = [
   { id: 'todo', name: '待辦', order: 0 },
@@ -208,6 +224,7 @@ function sanitizeCards(value: unknown, columns: IColumn[]): ICard[] {
     .map((card) => ({
       ...card,
       title: card.title.trim() || '未命名卡片',
+      reportId: typeof card.reportId === 'string' && card.reportId.trim() ? card.reportId.trim() : undefined,
       columnId: columnIds.has(card.columnId) ? card.columnId : fallbackColumnId
     }));
 
@@ -951,6 +968,31 @@ export function App({ context }: IAppProps) {
     return activeBoard.cards.find((card) => card.id === selectedCardId) ?? null;
   }, [activeBoard, selectedCardId]);
 
+  const openCardInReportLogger = useCallback(async () => {
+    if (!activeBoard || !selectedCard) {
+      return;
+    }
+
+    const payload: IReportLoggerOpenOrCreatePayload = {
+      sourcePluginId: SOURCE_PLUGIN_ID,
+      targetPluginId: REPORT_LOGGER_PLUGIN_ID,
+      boardId: activeBoard.id,
+      cardId: selectedCard.id,
+      cardTitle: cardForm.title.trim() || selectedCard.title,
+      cardDescription: cardForm.description.trim() || selectedCard.description,
+      reportId: selectedCard.reportId,
+      mode: selectedCard.reportId ? 'open' : 'create',
+      requestedAt: new Date().toISOString()
+    };
+
+    try {
+      await context.eventBus.emit(REPORT_LOGGER_OPEN_OR_CREATE_EVENT, payload);
+    } catch (error) {
+      console.error('[task-board] open report logger failed', error);
+      window.alert('暫時無法開啟 Report Logger，請稍後再試。');
+    }
+  }, [activeBoard, cardForm.description, cardForm.title, context.eventBus, selectedCard]);
+
   const sortedColumns = useMemo(() => {
     if (!activeBoard) {
       return [];
@@ -1390,7 +1432,16 @@ export function App({ context }: IAppProps) {
               onChange={(event) => setCardForm((prev) => ({ ...prev, description: event.target.value }))}
             />
 
+            <p className="modal__hint">
+              {selectedCard.reportId
+                ? '已綁定 report 文件，將直接在 Report Logger 開啟。'
+                : '尚未綁定 report 文件，將跳轉到 Report Logger 建立文件。'}
+            </p>
+
             <div className="modal__actions">
+              <button type="button" className="ghost" onClick={openCardInReportLogger}>
+                前往 Report Logger
+              </button>
               <button type="button" className="ghost" onClick={() => setSelectedCardId(null)}>
                 取消
               </button>

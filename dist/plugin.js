@@ -1,11 +1,11 @@
-import o, { useState as y, useRef as G, useEffect as ar, useCallback as b, useMemo as V, createElement as Mr } from "react";
-import { createRoot as Pr } from "react-dom/client";
-const Er = "task-boards", Gr = "tasks", H = "2.0.0", or = [
+import o, { useState as y, useRef as V, useEffect as or, useCallback as m, useMemo as W, createElement as Yr } from "react";
+import { createRoot as Mr } from "react-dom/client";
+const vr = "task-boards", Vr = "tasks", J = "2.1.0", Wr = "plugin-task-board", Xr = "report-logger", $r = "REPORT_LOGGER:OPEN_OR_CREATE", ir = [
   { id: "todo", name: "待辦", order: 0 },
   { id: "doing", name: "進行中", order: 1 },
   { id: "done", name: "已完成", order: 2 }
 ];
-function X(i) {
+function $(i) {
   if (typeof i != "string")
     return i;
   try {
@@ -14,28 +14,28 @@ function X(i) {
     return i;
   }
 }
-function Vr(i) {
-  const t = X(i);
+function Hr(i) {
+  const t = $(i);
   if (!t || typeof t != "object")
     return t;
   const a = t;
-  return "data" in a ? X(a.data) : t;
+  return "data" in a ? $(a.data) : t;
 }
-function Ir(i) {
+function Nr(i) {
   if (Array.isArray(i))
     return i;
-  const t = X(i);
+  const t = $(i);
   if (!t || typeof t != "object")
     return null;
   const a = t, l = ["data", "value", "payload", "tasks"];
-  for (const m of l) {
-    const f = Ir(a[m]);
-    if (f)
-      return f;
+  for (const g of l) {
+    const p = Nr(a[g]);
+    if (p)
+      return p;
   }
   return null;
 }
-function Wr(i) {
+function Jr(i) {
   return Array.isArray(i) ? i.filter((t) => {
     if (!t || typeof t != "object")
       return !1;
@@ -43,27 +43,27 @@ function Wr(i) {
     return typeof a.id == "string" && typeof a.title == "string" && (a.status === "todo" || a.status === "in-progress" || a.status === "done") && typeof a.createdAt == "string";
   }).map((t) => ({ ...t })) : [];
 }
-function sr(i) {
+function lr(i) {
   return {
     id: crypto.randomUUID(),
     name: "我的任務板",
-    columns: or.map((a) => ({ ...a })),
+    columns: ir.map((a) => ({ ...a })),
     cards: [],
     createdAt: i,
     updatedAt: i
   };
 }
-function vr() {
-  const i = (/* @__PURE__ */ new Date()).toISOString(), t = sr(i);
+function Cr() {
+  const i = (/* @__PURE__ */ new Date()).toISOString(), t = lr(i);
   return {
-    schemaVersion: H,
+    schemaVersion: J,
     activeBoardId: t.id,
     boards: [t]
   };
 }
-function Xr(i) {
+function qr(i) {
   if (!Array.isArray(i))
-    return or.map((a) => ({ ...a }));
+    return ir.map((a) => ({ ...a }));
   const t = i.filter((a) => {
     if (!a || typeof a != "object")
       return !1;
@@ -74,49 +74,50 @@ function Xr(i) {
     name: a.name.trim() || "未命名欄位",
     order: a.order
   })).sort((a, l) => a.order - l.order).map((a, l) => ({ ...a, order: l }));
-  return t.length > 0 ? t : or.map((a) => ({ ...a }));
+  return t.length > 0 ? t : ir.map((a) => ({ ...a }));
 }
-function $r(i, t) {
+function Qr(i, t) {
   var w;
   if (!Array.isArray(i))
     return [];
-  const a = new Set(t.map((c) => c.id)), l = ((w = t[0]) == null ? void 0 : w.id) ?? "todo", m = i.filter((c) => {
+  const a = new Set(t.map((c) => c.id)), l = ((w = t[0]) == null ? void 0 : w.id) ?? "todo", g = i.filter((c) => {
     if (!c || typeof c != "object")
       return !1;
-    const p = c;
-    return typeof p.id == "string" && typeof p.title == "string" && typeof p.description == "string" && typeof p.columnId == "string" && typeof p.order == "number" && Number.isFinite(p.order) && typeof p.createdAt == "string" && typeof p.updatedAt == "string";
+    const f = c;
+    return typeof f.id == "string" && typeof f.title == "string" && typeof f.description == "string" && typeof f.columnId == "string" && typeof f.order == "number" && Number.isFinite(f.order) && typeof f.createdAt == "string" && typeof f.updatedAt == "string";
   }).map((c) => ({
     ...c,
     title: c.title.trim() || "未命名卡片",
+    reportId: typeof c.reportId == "string" && c.reportId.trim() ? c.reportId.trim() : void 0,
     columnId: a.has(c.columnId) ? c.columnId : l
-  })), f = /* @__PURE__ */ new Set(), _ = m.map((c) => {
-    if (!f.has(c.id))
-      return f.add(c.id), c;
-    const p = crypto.randomUUID();
-    return f.add(p), {
+  })), p = /* @__PURE__ */ new Set(), _ = g.map((c) => {
+    if (!p.has(c.id))
+      return p.add(c.id), c;
+    const f = crypto.randomUUID();
+    return p.add(f), {
       ...c,
-      id: p
+      id: f
     };
-  }), I = /* @__PURE__ */ new Map();
+  }), N = /* @__PURE__ */ new Map();
   for (const c of _) {
-    const p = I.get(c.columnId) ?? [];
-    p.push(c), I.set(c.columnId, p);
+    const f = N.get(c.columnId) ?? [];
+    f.push(c), N.set(c.columnId, f);
   }
   const v = [];
-  for (const [c, p] of I.entries())
-    p.sort((C, g) => C.order - g.order).forEach((C, g) => {
-      v.push({ ...C, columnId: c, order: g });
+  for (const [c, f] of N.entries())
+    f.sort((C, b) => C.order - b.order).forEach((C, b) => {
+      v.push({ ...C, columnId: c, order: b });
     });
   return v;
 }
-function Hr(i) {
+function Zr(i) {
   return Array.isArray(i) ? i.filter((t) => {
     if (!t || typeof t != "object")
       return !1;
     const a = t;
     return typeof a.id == "string" && typeof a.name == "string" && typeof a.createdAt == "string" && typeof a.updatedAt == "string";
   }).map((t) => {
-    const a = Xr(t.columns), l = $r(t.cards, a);
+    const a = qr(t.columns), l = Qr(t.cards, a);
     return {
       id: t.id,
       name: t.name.trim() || "未命名看板",
@@ -127,60 +128,60 @@ function Hr(i) {
     };
   }) : [];
 }
-function Jr(i) {
-  const t = Wr(Ir(i) ?? []), a = (/* @__PURE__ */ new Date()).toISOString(), l = sr(a), m = {
+function rn(i) {
+  const t = Jr(Nr(i) ?? []), a = (/* @__PURE__ */ new Date()).toISOString(), l = lr(a), g = {
     todo: "todo",
     "in-progress": "doing",
     done: "done"
   };
-  return l.cards = t.map((f, _) => ({
-    id: f.id,
-    title: f.title,
+  return l.cards = t.map((p, _) => ({
+    id: p.id,
+    title: p.title,
     description: "",
-    columnId: m[f.status],
+    columnId: g[p.status],
     order: _,
-    createdAt: f.createdAt,
-    updatedAt: f.createdAt
+    createdAt: p.createdAt,
+    updatedAt: p.createdAt
   })), l.updatedAt = a, {
-    schemaVersion: H,
+    schemaVersion: J,
     activeBoardId: l.id,
     boards: [l]
   };
 }
-function qr(i) {
-  const t = Vr(i), a = X(t);
+function nn(i) {
+  const t = Hr(i), a = $(t);
   if (!a || typeof a != "object")
     return null;
-  const l = a, m = Hr(l.boards);
-  if (m.length === 0)
+  const l = a, g = Zr(l.boards);
+  if (g.length === 0)
     return null;
-  const f = typeof l.activeBoardId == "string" && m.some((_) => _.id === l.activeBoardId) ? l.activeBoardId : m[0].id;
+  const p = typeof l.activeBoardId == "string" && g.some((_) => _.id === l.activeBoardId) ? l.activeBoardId : g[0].id;
   return {
-    schemaVersion: H,
-    activeBoardId: f,
-    boards: m
+    schemaVersion: J,
+    activeBoardId: p,
+    boards: g
   };
 }
-function $(i, t) {
+function H(i, t) {
   return i.filter((a) => a.columnId === t).sort((a, l) => a.order - l.order);
 }
-function Qr(i, t, a, l) {
-  const m = i.find((g) => g.id === t);
-  if (!m)
+function en(i, t, a, l) {
+  const g = i.find((b) => b.id === t);
+  if (!g)
     return i;
-  const f = i.filter((g) => g.id !== t), _ = $(f, a), I = l === null ? _.length : Math.max(0, _.findIndex((g) => g.id === l)), v = {
-    ...m,
+  const p = i.filter((b) => b.id !== t), _ = H(p, a), N = l === null ? _.length : Math.max(0, _.findIndex((b) => b.id === l)), v = {
+    ...g,
     columnId: a,
     updatedAt: (/* @__PURE__ */ new Date()).toISOString()
   };
-  _.splice(I, 0, v);
-  const w = _.map((g, A) => ({ ...g, order: A })), c = m.columnId;
+  _.splice(N, 0, v);
+  const w = _.map((b, S) => ({ ...b, order: S })), c = g.columnId;
   if (c === a)
-    return [...f.filter((A) => A.columnId !== a), ...w];
-  const p = $(f, c).map((g, A) => ({ ...g, order: A }));
-  return [...f.filter((g) => g.columnId !== c && g.columnId !== a), ...p, ...w];
+    return [...p.filter((S) => S.columnId !== a), ...w];
+  const f = H(p, c).map((b, S) => ({ ...b, order: S }));
+  return [...p.filter((b) => b.columnId !== c && b.columnId !== a), ...f, ...w];
 }
-function Cr(i) {
+function Ir(i) {
   const t = i.currentTarget.getBoundingClientRect();
   return i.clientY - t.top < t.height / 2 ? "before" : "after";
 }
@@ -188,28 +189,28 @@ function Dr(i) {
   const t = i.currentTarget.getBoundingClientRect();
   return i.clientX - t.left < t.width / 2 ? "before" : "after";
 }
-function Zr({ context: i }) {
-  const [t, a] = y(() => vr()), [l, m] = y(""), [f, _] = y(null), [I, v] = y(""), [w, c] = y(null), [p, C] = y(""), [g, A] = y(""), [J, cr] = y({}), [S, O] = y(null), [T, q] = y({ title: "", description: "" }), [Y, Q] = y(null), [Nr, j] = y(null), [N, Z] = y(null), [z, F] = y(null), [L, rr] = y(null), [R, U] = y(null), [Br, Ar] = y(!1), [ur, Sr] = y(!1), fr = G(!1), nr = G(!1), er = G(!1), pr = G(null);
-  ar(() => {
+function tn({ context: i }) {
+  const [t, a] = y(() => Cr()), [l, g] = y(""), [p, _] = y(null), [N, v] = y(""), [w, c] = y(null), [f, C] = y(""), [b, S] = y(""), [q, ur] = y({}), [O, L] = y(null), [D, Q] = y({ title: "", description: "" }), [K, Z] = y(null), [Br, j] = y(null), [B, rr] = y(null), [T, P] = y(null), [U, nr] = y(null), [z, G] = y(null), [Rr, Ar] = y(!1), [pr, Sr] = y(!1), fr = V(!1), er = V(!1), tr = V(!1), mr = V(null);
+  or(() => {
     let r = !1;
     return (async () => {
       try {
         const [n, s] = await Promise.all([
-          i.storage.get(Er),
-          i.storage.get(Gr)
+          i.storage.get(vr),
+          i.storage.get(Vr)
         ]);
         if (r)
           return;
-        const u = qr(n);
+        const u = nn(n);
         if (u) {
           a(u);
           return;
         }
         if (s) {
-          a(Jr(s));
+          a(rn(s));
           return;
         }
-        a(vr());
+        a(Cr());
       } catch (n) {
         console.error("[task-board] restore failed", n);
       } finally {
@@ -218,31 +219,31 @@ function Zr({ context: i }) {
     })(), () => {
       r = !0;
     };
-  }, [i]), ar(() => {
-    if (ur) {
+  }, [i]), or(() => {
+    if (pr) {
       if (!fr.current) {
         fr.current = !0;
         return;
       }
-      i.storage.save(Er, t, H).then(() => {
+      i.storage.save(vr, t, J).then(() => {
         const r = t.boards.reduce((e, n) => e + n.cards.length, 0);
         return i.eventBus.emit("TASK_COUNT_CHANGED", { count: r });
       }).catch((r) => {
         console.error("[task-board] save failed", r);
       });
     }
-  }, [i, ur, t]);
-  const D = b((r) => {
+  }, [i, pr, t]);
+  const I = m((r) => {
     a((e) => r(e));
-  }, []), d = V(
+  }, []), d = W(
     () => t.boards.find((r) => r.id === t.activeBoardId) ?? t.boards[0] ?? null,
     [t.activeBoardId, t.boards]
-  ), zr = V(
+  ), Or = W(
     () => t.boards.reduce((r, e) => r + e.cards.length, 0),
     [t.boards]
-  ), x = b(
+  ), x = m(
     (r, e) => {
-      D((n) => ({
+      I((n) => ({
         ...n,
         boards: n.boards.map((s) => s.id !== r ? s : {
           ...e(s),
@@ -250,61 +251,61 @@ function Zr({ context: i }) {
         })
       }));
     },
-    [D]
-  ), mr = b(() => {
+    [I]
+  ), gr = m(() => {
     const r = l.trim();
     if (!r)
       return;
-    const e = (/* @__PURE__ */ new Date()).toISOString(), n = sr(e);
-    n.name = r, D((s) => ({
+    const e = (/* @__PURE__ */ new Date()).toISOString(), n = lr(e);
+    n.name = r, I((s) => ({
       ...s,
       boards: [...s.boards, n],
       activeBoardId: n.id
-    })), m("");
-  }, [l, D]), gr = b(
+    })), g("");
+  }, [l, I]), br = m(
     (r) => {
       const e = t.boards.find((n) => n.id === r);
-      e && (_(r), v(e.name), D((n) => ({
+      e && (_(r), v(e.name), I((n) => ({
         ...n,
         activeBoardId: r
       })));
     },
-    [D, t.boards]
-  ), M = b(
+    [I, t.boards]
+  ), Y = m(
     (r) => {
       if (!t.boards.find((s) => s.id === r)) {
         _(null), v("");
         return;
       }
-      const n = I.trim();
+      const n = N.trim();
       if (!n) {
         _(null), v("");
         return;
       }
       x(r, (s) => ({ ...s, name: n })), _(null), v("");
     },
-    [I, t.boards, x]
-  ), Rr = b(
+    [N, t.boards, x]
+  ), Tr = m(
     (r) => {
-      if (f === r) {
-        M(r);
+      if (p === r) {
+        Y(r);
         return;
       }
-      gr(r);
+      br(r);
     },
-    [f, M, gr]
-  ), Tr = b(() => {
+    [p, Y, br]
+  ), zr = m(() => {
     _(null), v("");
-  }, []), Or = b(
+  }, []), Lr = m(
     (r) => {
       if (t.boards.length <= 1) {
         window.alert("至少需要保留一個看板。");
         return;
       }
       const e = t.boards.find((n) => n.id === r);
-      e && window.confirm(`確定刪除看板「${e.name}」嗎？`) && D((n) => {
+      e && window.confirm(`確定刪除看板「${e.name}」嗎？`) && I((n) => {
         var u;
-        const s = n.boards.filter((B) => B.id !== r);
+        const s = n.boards.filter((A) => A.id !== r);
         return {
           ...n,
           boards: s,
@@ -312,40 +313,40 @@ function Zr({ context: i }) {
         };
       });
     },
-    [D, t.boards]
-  ), br = b(
+    [I, t.boards]
+  ), hr = m(
     (r, e = "before") => {
-      L && (D((n) => {
-        const s = n.boards.findIndex((h) => h.id === L);
+      U && (I((n) => {
+        const s = n.boards.findIndex((h) => h.id === U);
         if (s < 0)
           return n;
-        const u = n.boards.filter((h) => h.id !== L), B = n.boards[s];
-        let E = u.length;
+        const u = n.boards.filter((h) => h.id !== U), A = n.boards[s];
+        let k = u.length;
         if (r !== null) {
-          const h = u.findIndex((K) => K.id === r);
+          const h = u.findIndex((F) => F.id === r);
           if (h < 0)
             return n;
-          E = e === "after" ? h + 1 : h;
+          k = e === "after" ? h + 1 : h;
         }
-        if (E < 0 || E > u.length)
+        if (k < 0 || k > u.length)
           return n;
-        const k = [...u];
-        return k.splice(E, 0, B), {
+        const E = [...u];
+        return E.splice(k, 0, A), {
           ...n,
-          boards: k
+          boards: E
         };
-      }), rr(null), U(null));
+      }), nr(null), G(null));
     },
-    [L, D]
-  ), hr = b(() => {
+    [U, I]
+  ), xr = m(() => {
     if (!d)
       return;
-    const r = g.trim();
+    const r = b.trim();
     r && (x(d.id, (e) => ({
       ...e,
       columns: [...e.columns, { id: crypto.randomUUID(), name: r, order: e.columns.length }]
-    })), A(""));
-  }, [d, g, x]), xr = b(
+    })), S(""));
+  }, [d, b, x]), yr = m(
     (r) => {
       if (!d)
         return;
@@ -353,7 +354,7 @@ function Zr({ context: i }) {
       e && (c(r), C(e.name));
     },
     [d]
-  ), P = b(
+  ), M = m(
     (r) => {
       if (!d)
         return;
@@ -361,7 +362,7 @@ function Zr({ context: i }) {
         c(null), C("");
         return;
       }
-      const n = p.trim();
+      const n = f.trim();
       if (!n) {
         c(null), C("");
         return;
@@ -371,25 +372,25 @@ function Zr({ context: i }) {
         columns: s.columns.map((u) => u.id === r ? { ...u, name: n } : u)
       })), c(null), C("");
     },
-    [d, p, x]
-  ), jr = b(
+    [d, f, x]
+  ), jr = m(
     (r) => {
       if (w === r) {
-        P(r);
+        M(r);
         return;
       }
-      xr(r);
+      yr(r);
     },
-    [w, P, xr]
-  ), tr = b(() => {
+    [w, M, yr]
+  ), ar = m(() => {
     c(null), C("");
   }, []);
-  ar(() => {
+  or(() => {
     if (!d || !w)
       return;
-    d.columns.some((e) => e.id === w) || tr();
-  }, [d, tr, w]);
-  const Fr = b(
+    d.columns.some((e) => e.id === w) || ar();
+  }, [d, ar, w]);
+  const Pr = m(
     (r) => {
       if (!d || d.columns.length <= 1) {
         window.alert("至少需要保留一個欄位。");
@@ -397,50 +398,50 @@ function Zr({ context: i }) {
       }
       const e = d.columns.find((n) => n.id === r);
       e && window.confirm(`確定刪除欄位「${e.name}」嗎？卡片會移到第一欄。`) && x(d.id, (n) => {
-        var E;
-        const s = n.columns.filter((k) => k.id !== r).map((k, h) => ({ ...k, order: h })), u = (E = s[0]) == null ? void 0 : E.id, B = u ? n.cards.map((k) => k.columnId === r ? { ...k, columnId: u } : k) : n.cards;
+        var k;
+        const s = n.columns.filter((E) => E.id !== r).map((E, h) => ({ ...E, order: h })), u = (k = s[0]) == null ? void 0 : k.id, A = u ? n.cards.map((E) => E.columnId === r ? { ...E, columnId: u } : E) : n.cards;
         return {
           ...n,
           columns: s,
-          cards: B
+          cards: A
         };
       });
     },
     [d, x]
-  ), yr = b(
+  ), _r = m(
     (r, e = "before") => {
-      !d || !N || (x(d.id, (n) => {
-        const s = n.columns.findIndex((h) => h.id === N);
+      !d || !B || (x(d.id, (n) => {
+        const s = n.columns.findIndex((h) => h.id === B);
         if (s < 0)
           return n;
-        const u = n.columns.filter((h) => h.id !== N), B = n.columns[s];
-        let E = u.length;
+        const u = n.columns.filter((h) => h.id !== B), A = n.columns[s];
+        let k = u.length;
         if (r !== null) {
-          const h = u.findIndex((K) => K.id === r);
+          const h = u.findIndex((F) => F.id === r);
           if (h < 0)
             return n;
-          E = e === "after" ? h + 1 : h;
+          k = e === "after" ? h + 1 : h;
         }
-        if (E < 0 || E > u.length)
+        if (k < 0 || k > u.length)
           return n;
-        const k = [...u];
-        return k.splice(E, 0, B), {
+        const E = [...u];
+        return E.splice(k, 0, A), {
           ...n,
-          columns: k.map((h, K) => ({ ...h, order: K }))
+          columns: E.map((h, F) => ({ ...h, order: F }))
         };
-      }), Z(null), F(null));
+      }), rr(null), P(null));
     },
-    [d, N, x]
-  ), _r = b(
+    [d, B, x]
+  ), wr = m(
     (r) => {
       if (!d)
         return;
-      const e = (J[r] ?? "").trim();
+      const e = (q[r] ?? "").trim();
       if (!e)
         return;
       const n = (/* @__PURE__ */ new Date()).toISOString();
       x(d.id, (s) => {
-        const u = $(s.cards, r), B = {
+        const u = H(s.cards, r), A = {
           id: crypto.randomUUID(),
           title: e,
           description: "",
@@ -451,23 +452,23 @@ function Zr({ context: i }) {
         };
         return {
           ...s,
-          cards: [...s.cards, B]
+          cards: [...s.cards, A]
         };
-      }), cr((s) => ({ ...s, [r]: "" }));
+      }), ur((s) => ({ ...s, [r]: "" }));
     },
-    [d, J, x]
-  ), wr = b(
+    [d, q, x]
+  ), Er = m(
     (r) => {
       if (!d)
         return;
       const e = d.cards.find((n) => n.id === r);
-      e && (O(r), q({ title: e.title, description: e.description }));
+      e && (L(r), Q({ title: e.title, description: e.description }));
     },
     [d]
-  ), Lr = b(() => {
-    if (!d || !S)
+  ), Ur = m(() => {
+    if (!d || !O)
       return;
-    const r = T.title.trim();
+    const r = D.title.trim();
     if (!r) {
       window.alert("標題不能為空");
       return;
@@ -475,53 +476,72 @@ function Zr({ context: i }) {
     x(d.id, (e) => ({
       ...e,
       cards: e.cards.map(
-        (n) => n.id === S ? {
+        (n) => n.id === O ? {
           ...n,
           title: r,
-          description: T.description.trim(),
+          description: D.description.trim(),
           updatedAt: (/* @__PURE__ */ new Date()).toISOString()
         } : n
       )
-    })), O(null);
-  }, [d, T.description, T.title, S, x]), Ur = b(
+    })), L(null);
+  }, [d, D.description, D.title, O, x]), Gr = m(
     (r) => {
       d && (x(d.id, (e) => ({
         ...e,
         cards: e.cards.filter((n) => n.id !== r)
-      })), S === r && O(null));
+      })), O === r && L(null));
     },
-    [d, S, x]
-  ), kr = b(
+    [d, O, x]
+  ), kr = m(
     (r, e) => {
-      !d || !Y || (x(d.id, (n) => ({
+      !d || !K || (x(d.id, (n) => ({
         ...n,
-        cards: Qr(n.cards, Y, r, e)
-      })), Q(null), j(null));
+        cards: en(n.cards, K, r, e)
+      })), Z(null), j(null));
     },
-    [d, Y, x]
-  ), Kr = V(() => !d || !S ? null : d.cards.find((r) => r.id === S) ?? null, [d, S]), Yr = V(() => d ? [...d.columns].sort((r, e) => r.order - e.order) : [], [d]);
-  return /* @__PURE__ */ o.createElement("section", { className: "kanban-shell", "aria-busy": !Br }, /* @__PURE__ */ o.createElement("aside", { className: "board-sidebar" }, /* @__PURE__ */ o.createElement("div", { className: "board-sidebar__head" }, /* @__PURE__ */ o.createElement("p", { className: "board-sidebar__eyebrow" }, "Orbit Board"), /* @__PURE__ */ o.createElement("h1", null, "我的看板"), /* @__PURE__ */ o.createElement("p", { className: "board-sidebar__count" }, "總卡片: ", zr)), /* @__PURE__ */ o.createElement("div", { className: "board-sidebar__composer" }, /* @__PURE__ */ o.createElement("label", { htmlFor: "new-board", className: "sr-only" }, "新增看板"), /* @__PURE__ */ o.createElement(
+    [d, K, x]
+  ), R = W(() => !d || !O ? null : d.cards.find((r) => r.id === O) ?? null, [d, O]), Fr = m(async () => {
+    if (!d || !R)
+      return;
+    const r = {
+      sourcePluginId: Wr,
+      targetPluginId: Xr,
+      boardId: d.id,
+      cardId: R.id,
+      cardTitle: D.title.trim() || R.title,
+      cardDescription: D.description.trim() || R.description,
+      reportId: R.reportId,
+      mode: R.reportId ? "open" : "create",
+      requestedAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    try {
+      await i.eventBus.emit($r, r);
+    } catch (e) {
+      console.error("[task-board] open report logger failed", e), window.alert("暫時無法開啟 Report Logger，請稍後再試。");
+    }
+  }, [d, D.description, D.title, i.eventBus, R]), Kr = W(() => d ? [...d.columns].sort((r, e) => r.order - e.order) : [], [d]);
+  return /* @__PURE__ */ o.createElement("section", { className: "kanban-shell", "aria-busy": !Rr }, /* @__PURE__ */ o.createElement("aside", { className: "board-sidebar" }, /* @__PURE__ */ o.createElement("div", { className: "board-sidebar__head" }, /* @__PURE__ */ o.createElement("p", { className: "board-sidebar__eyebrow" }, "Orbit Board"), /* @__PURE__ */ o.createElement("h1", null, "我的看板"), /* @__PURE__ */ o.createElement("p", { className: "board-sidebar__count" }, "總卡片: ", Or)), /* @__PURE__ */ o.createElement("div", { className: "board-sidebar__composer" }, /* @__PURE__ */ o.createElement("label", { htmlFor: "new-board", className: "sr-only" }, "新增看板"), /* @__PURE__ */ o.createElement(
     "input",
     {
       id: "new-board",
       type: "text",
       placeholder: "新增看板名稱",
       value: l,
-      onChange: (r) => m(r.target.value),
+      onChange: (r) => g(r.target.value),
       onKeyDown: (r) => {
-        r.key === "Enter" && mr();
+        r.key === "Enter" && gr();
       }
     }
-  ), /* @__PURE__ */ o.createElement("button", { type: "button", onClick: mr }, "建立看板")), /* @__PURE__ */ o.createElement(
+  ), /* @__PURE__ */ o.createElement("button", { type: "button", onClick: gr }, "建立看板")), /* @__PURE__ */ o.createElement(
     "ul",
     {
       className: "board-list",
       role: "list",
       onDragOver: (r) => {
-        r.target === r.currentTarget && (r.preventDefault(), U(null));
+        r.target === r.currentTarget && (r.preventDefault(), G(null));
       },
       onDrop: (r) => {
-        r.target === r.currentTarget && (r.preventDefault(), br(null));
+        r.target === r.currentTarget && (r.preventDefault(), hr(null));
       }
     },
     t.boards.map((r) => /* @__PURE__ */ o.createElement(
@@ -530,29 +550,29 @@ function Zr({ context: i }) {
         key: r.id,
         className: [
           "board-list__item",
-          L === r.id ? "board-list__item--dragging" : "",
-          (R == null ? void 0 : R.id) === r.id && R.position === "before" ? "board-list__item--indicator-before" : "",
-          (R == null ? void 0 : R.id) === r.id && R.position === "after" ? "board-list__item--indicator-after" : ""
+          U === r.id ? "board-list__item--dragging" : "",
+          (z == null ? void 0 : z.id) === r.id && z.position === "before" ? "board-list__item--indicator-before" : "",
+          (z == null ? void 0 : z.id) === r.id && z.position === "after" ? "board-list__item--indicator-after" : ""
         ].filter(Boolean).join(" "),
         draggable: !0,
         onDragStart: (e) => {
-          e.dataTransfer.effectAllowed = "move", rr(r.id);
+          e.dataTransfer.effectAllowed = "move", nr(r.id);
         },
         onDragEnd: () => {
-          rr(null), U(null);
+          nr(null), G(null);
         },
         onDragOver: (e) => {
           e.preventDefault();
-          const n = Cr(e);
-          U({ id: r.id, position: n });
+          const n = Ir(e);
+          G({ id: r.id, position: n });
         },
         onDragLeave: () => {
-          U((e) => (e == null ? void 0 : e.id) === r.id ? null : e);
+          G((e) => (e == null ? void 0 : e.id) === r.id ? null : e);
         },
         onDrop: (e) => {
           e.preventDefault();
-          const n = Cr(e);
-          br(r.id, n);
+          const n = Ir(e);
+          hr(r.id, n);
         }
       },
       /* @__PURE__ */ o.createElement(
@@ -560,7 +580,7 @@ function Zr({ context: i }) {
         {
           type: "button",
           className: r.id === (d == null ? void 0 : d.id) ? "board-item board-item--active" : "board-item",
-          onClick: () => D((e) => ({ ...e, activeBoardId: r.id }))
+          onClick: () => I((e) => ({ ...e, activeBoardId: r.id }))
         },
         /* @__PURE__ */ o.createElement("span", null, r.name),
         /* @__PURE__ */ o.createElement("small", null, r.cards.length)
@@ -571,29 +591,29 @@ function Zr({ context: i }) {
           type: "button",
           className: "ghost",
           "data-board-rename-id": r.id,
-          onClick: () => Rr(r.id)
+          onClick: () => Tr(r.id)
         },
-        f === r.id ? "保存" : "改名"
-      ), /* @__PURE__ */ o.createElement("button", { type: "button", className: "danger", onClick: () => Or(r.id) }, "刪除"))
+        p === r.id ? "保存" : "改名"
+      ), /* @__PURE__ */ o.createElement("button", { type: "button", className: "danger", onClick: () => Lr(r.id) }, "刪除"))
     ))
-  )), /* @__PURE__ */ o.createElement("div", { className: "kanban-workspace" }, /* @__PURE__ */ o.createElement("header", { className: "workspace-header" }, /* @__PURE__ */ o.createElement("div", null, /* @__PURE__ */ o.createElement("p", { className: "workspace-header__eyebrow" }, "Task Workspace"), d && f === d.id ? /* @__PURE__ */ o.createElement(
+  )), /* @__PURE__ */ o.createElement("div", { className: "kanban-workspace" }, /* @__PURE__ */ o.createElement("header", { className: "workspace-header" }, /* @__PURE__ */ o.createElement("div", null, /* @__PURE__ */ o.createElement("p", { className: "workspace-header__eyebrow" }, "Task Workspace"), d && p === d.id ? /* @__PURE__ */ o.createElement(
     "input",
     {
       type: "text",
       className: "workspace-header__title-input",
-      value: I,
+      value: N,
       onChange: (r) => v(r.target.value),
       onKeyDown: (r) => {
-        r.key === "Enter" && M(d.id), r.key === "Escape" && (nr.current = !0, Tr());
+        r.key === "Enter" && Y(d.id), r.key === "Escape" && (er.current = !0, zr());
       },
       onBlur: (r) => {
         const e = r.relatedTarget;
         if ((e == null ? void 0 : e.dataset.boardRenameId) !== d.id) {
-          if (nr.current) {
-            nr.current = !1;
+          if (er.current) {
+            er.current = !1;
             return;
           }
-          M(d.id);
+          Y(d.id);
         }
       },
       autoFocus: !0,
@@ -605,59 +625,59 @@ function Zr({ context: i }) {
       id: "new-column",
       type: "text",
       placeholder: "新增欄位名稱",
-      value: g,
-      onChange: (r) => A(r.target.value),
+      value: b,
+      onChange: (r) => S(r.target.value),
       onKeyDown: (r) => {
-        r.key === "Enter" && hr();
+        r.key === "Enter" && xr();
       }
     }
-  ), /* @__PURE__ */ o.createElement("button", { type: "button", onClick: hr }, "新增欄位"))), /* @__PURE__ */ o.createElement(
+  ), /* @__PURE__ */ o.createElement("button", { type: "button", onClick: xr }, "新增欄位"))), /* @__PURE__ */ o.createElement(
     "div",
     {
       className: "lanes",
-      ref: pr,
+      ref: mr,
       onDragOver: (r) => {
-        if (!N)
+        if (!B)
           return;
-        const e = pr.current;
+        const e = mr.current;
         if (e) {
           const n = e.getBoundingClientRect(), s = 96, u = 20;
           r.clientX < n.left + s ? e.scrollLeft -= u : r.clientX > n.right - s && (e.scrollLeft += u);
         }
-        r.target === r.currentTarget && (r.preventDefault(), F(null));
+        r.target === r.currentTarget && (r.preventDefault(), P(null));
       },
       onDrop: (r) => {
-        N && r.target === r.currentTarget && (r.preventDefault(), yr(null));
+        B && r.target === r.currentTarget && (r.preventDefault(), _r(null));
       }
     },
-    Yr.map((r) => {
-      const e = d ? $(d.cards, r.id) : [];
+    Kr.map((r) => {
+      const e = d ? H(d.cards, r.id) : [];
       return /* @__PURE__ */ o.createElement(
         "article",
         {
           key: r.id,
           className: [
             "lane",
-            Nr === r.id ? "lane--drop" : "",
-            (z == null ? void 0 : z.id) === r.id && z.position === "before" ? "lane--indicator-before" : "",
-            (z == null ? void 0 : z.id) === r.id && z.position === "after" ? "lane--indicator-after" : "",
-            N === r.id ? "lane--dragging" : ""
+            Br === r.id ? "lane--drop" : "",
+            (T == null ? void 0 : T.id) === r.id && T.position === "before" ? "lane--indicator-before" : "",
+            (T == null ? void 0 : T.id) === r.id && T.position === "after" ? "lane--indicator-after" : "",
+            B === r.id ? "lane--dragging" : ""
           ].filter(Boolean).join(" "),
           onDragOver: (n) => {
-            if (n.preventDefault(), N) {
+            if (n.preventDefault(), B) {
               const s = Dr(n);
-              F({ id: r.id, position: s });
+              P({ id: r.id, position: s });
               return;
             }
             j(r.id);
           },
           onDragLeave: () => {
-            j((n) => n === r.id ? null : n), F((n) => (n == null ? void 0 : n.id) === r.id ? null : n);
+            j((n) => n === r.id ? null : n), P((n) => (n == null ? void 0 : n.id) === r.id ? null : n);
           },
           onDrop: (n) => {
-            if (n.preventDefault(), N) {
+            if (n.preventDefault(), B) {
               const s = Dr(n);
-              yr(r.id, s);
+              _r(r.id, s);
               return;
             }
             kr(r.id, null);
@@ -668,19 +688,19 @@ function Zr({ context: i }) {
           {
             type: "text",
             className: "lane__title-input",
-            value: p,
+            value: f,
             onChange: (n) => C(n.target.value),
             onKeyDown: (n) => {
-              n.key === "Enter" && P(r.id), n.key === "Escape" && (er.current = !0, tr());
+              n.key === "Enter" && M(r.id), n.key === "Escape" && (tr.current = !0, ar());
             },
             onBlur: (n) => {
               const s = n.relatedTarget;
               if ((s == null ? void 0 : s.dataset.columnRenameId) !== r.id) {
-                if (er.current) {
-                  er.current = !1;
+                if (tr.current) {
+                  tr.current = !1;
                   return;
                 }
-                P(r.id);
+                M(r.id);
               }
             },
             autoFocus: !0,
@@ -693,10 +713,10 @@ function Zr({ context: i }) {
             draggable: !0,
             title: "拖動欄位排序",
             onDragStart: (n) => {
-              n.dataTransfer.effectAllowed = "move", Z(r.id);
+              n.dataTransfer.effectAllowed = "move", rr(r.id);
             },
             onDragEnd: () => {
-              Z(null), F(null);
+              rr(null), P(null);
             }
           },
           /* @__PURE__ */ o.createElement("h3", null, r.name)
@@ -710,34 +730,34 @@ function Zr({ context: i }) {
             onClick: () => jr(r.id)
           },
           w === r.id ? "保存" : "改名"
-        ), /* @__PURE__ */ o.createElement("button", { type: "button", className: "danger", onClick: () => Fr(r.id) }, "刪除")),
+        ), /* @__PURE__ */ o.createElement("button", { type: "button", className: "danger", onClick: () => Pr(r.id) }, "刪除")),
         /* @__PURE__ */ o.createElement("div", { className: "lane__composer" }, /* @__PURE__ */ o.createElement("label", { htmlFor: `new-card-${r.id}`, className: "sr-only" }, "新增卡片"), /* @__PURE__ */ o.createElement(
           "input",
           {
             id: `new-card-${r.id}`,
             type: "text",
             placeholder: "新增卡片標題",
-            value: J[r.id] ?? "",
-            onChange: (n) => cr((s) => ({
+            value: q[r.id] ?? "",
+            onChange: (n) => ur((s) => ({
               ...s,
               [r.id]: n.target.value
             })),
             onKeyDown: (n) => {
-              n.key === "Enter" && _r(r.id);
+              n.key === "Enter" && wr(r.id);
             }
           }
-        ), /* @__PURE__ */ o.createElement("button", { type: "button", onClick: () => _r(r.id) }, "新增卡片")),
+        ), /* @__PURE__ */ o.createElement("button", { type: "button", onClick: () => wr(r.id) }, "新增卡片")),
         /* @__PURE__ */ o.createElement("ul", { className: "card-list", role: "list" }, e.map((n) => /* @__PURE__ */ o.createElement(
           "li",
           {
             key: n.id,
-            className: Y === n.id ? "card card--dragging" : "card",
+            className: K === n.id ? "card card--dragging" : "card",
             draggable: !0,
             onDragStart: (s) => {
-              s.dataTransfer.effectAllowed = "move", Q(n.id);
+              s.dataTransfer.effectAllowed = "move", Z(n.id);
             },
             onDragEnd: () => {
-              Q(null), j(null);
+              Z(null), j(null);
             },
             onDragOver: (s) => {
               s.preventDefault(), j(r.id);
@@ -746,18 +766,18 @@ function Zr({ context: i }) {
               s.preventDefault(), kr(r.id, n.id);
             }
           },
-          /* @__PURE__ */ o.createElement("button", { type: "button", className: "card__body", onClick: () => wr(n.id) }, /* @__PURE__ */ o.createElement("p", null, n.title), /* @__PURE__ */ o.createElement("small", null, n.description ? "已填寫詳情" : "尚無詳情")),
-          /* @__PURE__ */ o.createElement("div", { className: "card__actions" }, /* @__PURE__ */ o.createElement("button", { type: "button", className: "ghost", onClick: () => wr(n.id) }, "編輯"), /* @__PURE__ */ o.createElement("button", { type: "button", className: "danger", onClick: () => Ur(n.id) }, "刪除"))
+          /* @__PURE__ */ o.createElement("button", { type: "button", className: "card__body", onClick: () => Er(n.id) }, /* @__PURE__ */ o.createElement("p", null, n.title), /* @__PURE__ */ o.createElement("small", null, n.description ? "已填寫詳情" : "尚無詳情")),
+          /* @__PURE__ */ o.createElement("div", { className: "card__actions" }, /* @__PURE__ */ o.createElement("button", { type: "button", className: "ghost", onClick: () => Er(n.id) }, "編輯"), /* @__PURE__ */ o.createElement("button", { type: "button", className: "danger", onClick: () => Gr(n.id) }, "刪除"))
         )))
       );
     })
-  )), Kr && /* @__PURE__ */ o.createElement("div", { className: "modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "card-modal-title" }, /* @__PURE__ */ o.createElement("div", { className: "modal__panel" }, /* @__PURE__ */ o.createElement("header", { className: "modal__header" }, /* @__PURE__ */ o.createElement("h4", { id: "card-modal-title" }, "卡片詳情"), /* @__PURE__ */ o.createElement("button", { type: "button", className: "ghost", onClick: () => O(null) }, "關閉")), /* @__PURE__ */ o.createElement("label", { htmlFor: "card-title" }, "標題"), /* @__PURE__ */ o.createElement(
+  )), R && /* @__PURE__ */ o.createElement("div", { className: "modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "card-modal-title" }, /* @__PURE__ */ o.createElement("div", { className: "modal__panel" }, /* @__PURE__ */ o.createElement("header", { className: "modal__header" }, /* @__PURE__ */ o.createElement("h4", { id: "card-modal-title" }, "卡片詳情"), /* @__PURE__ */ o.createElement("button", { type: "button", className: "ghost", onClick: () => L(null) }, "關閉")), /* @__PURE__ */ o.createElement("label", { htmlFor: "card-title" }, "標題"), /* @__PURE__ */ o.createElement(
     "input",
     {
       id: "card-title",
       type: "text",
-      value: T.title,
-      onChange: (r) => q((e) => ({ ...e, title: r.target.value }))
+      value: D.title,
+      onChange: (r) => Q((e) => ({ ...e, title: r.target.value }))
     }
   ), /* @__PURE__ */ o.createElement("label", { htmlFor: "card-desc" }, "描述"), /* @__PURE__ */ o.createElement(
     "textarea",
@@ -765,12 +785,12 @@ function Zr({ context: i }) {
       id: "card-desc",
       rows: 5,
       placeholder: "輸入和這張卡片相關的資訊",
-      value: T.description,
-      onChange: (r) => q((e) => ({ ...e, description: r.target.value }))
+      value: D.description,
+      onChange: (r) => Q((e) => ({ ...e, description: r.target.value }))
     }
-  ), /* @__PURE__ */ o.createElement("div", { className: "modal__actions" }, /* @__PURE__ */ o.createElement("button", { type: "button", className: "ghost", onClick: () => O(null) }, "取消"), /* @__PURE__ */ o.createElement("button", { type: "button", onClick: Lr }, "儲存")))));
+  ), /* @__PURE__ */ o.createElement("p", { className: "modal__hint" }, R.reportId ? "已綁定 report 文件，將直接在 Report Logger 開啟。" : "尚未綁定 report 文件，將跳轉到 Report Logger 建立文件。"), /* @__PURE__ */ o.createElement("div", { className: "modal__actions" }, /* @__PURE__ */ o.createElement("button", { type: "button", className: "ghost", onClick: Fr }, "前往 Report Logger"), /* @__PURE__ */ o.createElement("button", { type: "button", className: "ghost", onClick: () => L(null) }, "取消"), /* @__PURE__ */ o.createElement("button", { type: "button", onClick: Ur }, "儲存")))));
 }
-const rn = `body {\r
+const an = `body {\r
   color-scheme: light;\r
   --bg-1: #fff8e7;\r
   --bg-2: #dceeff;\r
@@ -1261,6 +1281,13 @@ input:focus-visible {\r
   font-weight: 600;\r
 }\r
 \r
+.modal__hint {\r
+  margin: -2px 0 4px;\r
+  color: var(--muted);\r
+  font-size: 13px;\r
+  line-height: 1.4;\r
+}\r
+\r
 .modal__actions {\r
   display: flex;\r
   justify-content: end;\r
@@ -1306,37 +1333,37 @@ input:focus-visible {\r
     overflow-y: visible;\r
   }\r
 }\r
-`, lr = "plugin-task-board", ir = `${lr}-styles`;
-let W = 0;
-const dr = /* @__PURE__ */ new WeakMap();
-function nn(i, t) {
-  if (!document.getElementById(ir)) {
-    const m = document.createElement("style");
-    m.id = ir, m.textContent = rn, document.head.appendChild(m);
+`, cr = "plugin-task-board", dr = `${cr}-styles`;
+let X = 0;
+const sr = /* @__PURE__ */ new WeakMap();
+function on(i, t) {
+  if (!document.getElementById(dr)) {
+    const g = document.createElement("style");
+    g.id = dr, g.textContent = an, document.head.appendChild(g);
   }
-  W++;
+  X++;
   const a = document.createElement("div");
-  a.id = lr, i.appendChild(a);
-  const l = Pr(a);
-  dr.set(i, l), l.render(Mr(Zr, { context: t }));
+  a.id = cr, i.appendChild(a);
+  const l = Mr(a);
+  sr.set(i, l), l.render(Yr(tn, { context: t }));
 }
-function en(i) {
-  const t = dr.get(i);
-  if (t && (t.unmount(), dr.delete(i)), i.innerHTML = "", W = Math.max(0, W - 1), W === 0) {
-    const a = document.getElementById(ir);
+function dn(i) {
+  const t = sr.get(i);
+  if (t && (t.unmount(), sr.delete(i)), i.innerHTML = "", X = Math.max(0, X - 1), X === 0) {
+    const a = document.getElementById(dr);
     a && a.remove();
   }
 }
-const on = {
-  id: lr,
+const cn = {
+  id: cr,
   mount(i, t) {
-    nn(i, t);
+    on(i, t);
   },
   unmount(i) {
-    en(i);
+    dn(i);
   }
 };
 export {
-  on as default
+  cn as default
 };
 //# sourceMappingURL=plugin.js.map

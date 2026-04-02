@@ -489,6 +489,13 @@ input:focus-visible {
   font-weight: 600;
 }
 
+.modal__hint {
+  margin: -2px 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .modal__actions {
   display: flex;
   justify-content: end;
