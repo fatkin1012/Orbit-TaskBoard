@@ -64,6 +64,8 @@ const STORAGE_VERSION = '2.1.0';
 const SOURCE_PLUGIN_ID = 'plugin-task-board';
 const REPORT_LOGGER_PLUGIN_ID = 'report-logger';
 const REPORT_LOGGER_OPEN_OR_CREATE_EVENT = 'REPORT_LOGGER:OPEN_OR_CREATE';
+const NAVIGATE_TO_PLUGIN_EVENT = 'NAVIGATE_TO_PLUGIN';
+const OPEN_PLUGIN_EVENT = 'OPEN_PLUGIN';
 
 const DEFAULT_COLUMNS: IColumn[] = [
   { id: 'todo', name: '待辦', order: 0 },
@@ -422,6 +424,7 @@ export function App({ context }: IAppProps) {
   const [dragOverLanePlacement, setDragOverLanePlacement] = useState<{ id: string; position: TDropPlacement } | null>(null);
   const [draggingBoardId, setDraggingBoardId] = useState<string | null>(null);
   const [dragOverBoardPlacement, setDragOverBoardPlacement] = useState<{ id: string; position: TDropPlacement } | null>(null);
+  const [isOpeningReportLogger, setIsOpeningReportLogger] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const firstPersistSkippedRef = useRef(false);
@@ -969,6 +972,11 @@ export function App({ context }: IAppProps) {
   }, [activeBoard, selectedCardId]);
 
   const openCardInReportLogger = useCallback(async () => {
+    if (isOpeningReportLogger) {
+      console.debug('[task-board][report-logger] action skipped: already processing');
+      return;
+    }
+
     console.debug('[task-board][report-logger] action requested', {
       hasActiveBoard: Boolean(activeBoard),
       selectedCardId,
@@ -1003,17 +1011,50 @@ export function App({ context }: IAppProps) {
       payload
     });
 
+    setIsOpeningReportLogger(true);
+
     try {
       const result = await context.eventBus.emit(REPORT_LOGGER_OPEN_OR_CREATE_EVENT, payload);
       console.info('[task-board][report-logger] emit succeeded', {
         eventName: REPORT_LOGGER_OPEN_OR_CREATE_EVENT,
         result
       });
+
+      const fallbackEvents = [NAVIGATE_TO_PLUGIN_EVENT, OPEN_PLUGIN_EVENT];
+      for (const eventName of fallbackEvents) {
+        const fallbackPayload = {
+          pluginId: REPORT_LOGGER_PLUGIN_ID,
+          action: 'open-or-create-report',
+          data: payload,
+          sourcePluginId: SOURCE_PLUGIN_ID,
+          requestedAt: payload.requestedAt
+        };
+
+        console.debug('[task-board][report-logger] emitting fallback event', {
+          eventName,
+          payload: fallbackPayload
+        });
+
+        try {
+          const fallbackResult = await context.eventBus.emit(eventName, fallbackPayload);
+          console.info('[task-board][report-logger] fallback emit succeeded', {
+            eventName,
+            result: fallbackResult
+          });
+        } catch (fallbackError) {
+          console.warn('[task-board][report-logger] fallback emit failed', {
+            eventName,
+            error: fallbackError
+          });
+        }
+      }
     } catch (error) {
       console.error('[task-board] open report logger failed', error);
       window.alert('暫時無法開啟 Report Logger，請稍後再試。');
+    } finally {
+      setIsOpeningReportLogger(false);
     }
-  }, [activeBoard, cardForm.description, cardForm.title, context.eventBus, selectedCard, selectedCardId]);
+  }, [activeBoard, cardForm.description, cardForm.title, context.eventBus, isOpeningReportLogger, selectedCard, selectedCardId]);
 
   const sortedColumns = useMemo(() => {
     if (!activeBoard) {
@@ -1461,8 +1502,8 @@ export function App({ context }: IAppProps) {
             </p>
 
             <div className="modal__actions">
-              <button type="button" className="ghost" onClick={openCardInReportLogger}>
-                前往 Report Logger
+              <button type="button" className="ghost" onClick={openCardInReportLogger} disabled={isOpeningReportLogger}>
+                {isOpeningReportLogger ? '連線中...' : '前往 Report Logger'}
               </button>
               <button type="button" className="ghost" onClick={() => setSelectedCardId(null)}>
                 取消
