@@ -969,7 +969,20 @@ export function App({ context }: IAppProps) {
   }, [activeBoard, selectedCardId]);
 
   const openCardInReportLogger = useCallback(async () => {
+    console.debug('[task-board][report-logger] action requested', {
+      hasActiveBoard: Boolean(activeBoard),
+      selectedCardId,
+      hasSelectedCard: Boolean(selectedCard),
+      eventName: REPORT_LOGGER_OPEN_OR_CREATE_EVENT,
+      eventBusHasEmit: typeof context.eventBus?.emit === 'function'
+    });
+
     if (!activeBoard || !selectedCard) {
+      console.warn('[task-board][report-logger] action aborted: missing board or card', {
+        activeBoardId: activeBoard?.id ?? null,
+        selectedCardId,
+        selectedCard
+      });
       return;
     }
 
@@ -985,13 +998,22 @@ export function App({ context }: IAppProps) {
       requestedAt: new Date().toISOString()
     };
 
+    console.debug('[task-board][report-logger] emitting event', {
+      eventName: REPORT_LOGGER_OPEN_OR_CREATE_EVENT,
+      payload
+    });
+
     try {
-      await context.eventBus.emit(REPORT_LOGGER_OPEN_OR_CREATE_EVENT, payload);
+      const result = await context.eventBus.emit(REPORT_LOGGER_OPEN_OR_CREATE_EVENT, payload);
+      console.info('[task-board][report-logger] emit succeeded', {
+        eventName: REPORT_LOGGER_OPEN_OR_CREATE_EVENT,
+        result
+      });
     } catch (error) {
       console.error('[task-board] open report logger failed', error);
       window.alert('暫時無法開啟 Report Logger，請稍後再試。');
     }
-  }, [activeBoard, cardForm.description, cardForm.title, context.eventBus, selectedCard]);
+  }, [activeBoard, cardForm.description, cardForm.title, context.eventBus, selectedCard, selectedCardId]);
 
   const sortedColumns = useMemo(() => {
     if (!activeBoard) {
